@@ -63,33 +63,49 @@ architecture="$(dpkg-deb -f "$selected_deb" Architecture)"
 package_name="$(dpkg-deb -f "$selected_deb" Name)"
 package_version="$(dpkg-deb -f "$selected_deb" Version)"
 package_description="$(dpkg-deb -f "$selected_deb" Description)"
-date -Ru > "$REPO_DIR/.release-date"
-release_date="$(cat "$REPO_DIR/.release-date")"
-rm "$REPO_DIR/.release-date"
-{
-    printf 'Origin: PerformancePlus\n'
-    printf 'Label: PerformancePlus\n'
-    printf 'Suite: stable\n'
-    printf 'Codename: stable\n'
-    printf 'Date: %s\n' "$release_date"
-    printf 'Architectures: %s\n' "$architecture"
-    printf 'Components: main\n'
-    printf 'Description: PerformancePlus jailbreak tweak repository\n'
-    printf 'MD5Sum:\n'
-    for file in Packages Packages.gz; do
-        printf ' %s %s %s\n' \
-            "$(md5sum "$REPO_DIR/$file" | cut -d ' ' -f 1)" \
-            "$(wc -c < "$REPO_DIR/$file" | tr -d ' ')" \
-            "$file"
-    done
-    printf 'SHA256:\n'
-    for file in Packages Packages.gz; do
-        printf ' %s %s %s\n' \
-            "$(sha256sum "$REPO_DIR/$file" | cut -d ' ' -f 1)" \
-            "$(wc -c < "$REPO_DIR/$file" | tr -d ' ')" \
-            "$file"
-    done
-} > "$REPO_DIR/Release"
+binary_index_dir="main/binary-${architecture}"
+dist_dir="$REPO_DIR/dists/stable"
+mkdir -p "$dist_dir/$binary_index_dir"
+cp "$REPO_DIR/Packages" "$dist_dir/$binary_index_dir/Packages"
+cp "$REPO_DIR/Packages.gz" "$dist_dir/$binary_index_dir/Packages.gz"
+
+generate_release() {
+    local output_path="$1"
+    shift
+    local release_dir
+    release_dir="$(dirname "$output_path")"
+    local release_date
+    release_date="$(date -Ru)"
+
+    {
+        printf 'Origin: PerformancePlus\n'
+        printf 'Label: PerformancePlus\n'
+        printf 'Suite: stable\n'
+        printf 'Codename: stable\n'
+        printf 'Date: %s\n' "$release_date"
+        printf 'Architectures: %s\n' "$architecture"
+        printf 'Components: main\n'
+        printf 'Description: PerformancePlus jailbreak tweak repository\n'
+        printf 'MD5Sum:\n'
+        for file in "$@"; do
+            printf ' %s %s %s\n' \
+                "$(md5sum "$release_dir/$file" | cut -d ' ' -f 1)" \
+                "$(wc -c < "$release_dir/$file" | tr -d ' ')" \
+                "$file"
+        done
+        printf 'SHA256:\n'
+        for file in "$@"; do
+            printf ' %s %s %s\n' \
+                "$(sha256sum "$release_dir/$file" | cut -d ' ' -f 1)" \
+                "$(wc -c < "$release_dir/$file" | tr -d ' ')" \
+                "$file"
+        done
+    } > "$output_path"
+}
+
+generate_release "$REPO_DIR/Release" Packages Packages.gz
+generate_release "$dist_dir/Release" \
+    "$binary_index_dir/Packages" "$binary_index_dir/Packages.gz"
 
 github_repository="${GITHUB_REPOSITORY:-}"
 if [[ -z "$github_repository" ]]; then
@@ -249,8 +265,10 @@ cat > "$REPO_DIR/index.html" <<EOF
 </html>
 EOF
 
-gzip -t "$REPO_DIR/Packages.gz"
+gzip -t "$REPO_DIR/Packages.gz" "$dist_dir/$binary_index_dir/Packages.gz"
 cmp "$REPO_DIR/Packages" <(gzip -dc "$REPO_DIR/Packages.gz")
+cmp "$REPO_DIR/Packages" "$dist_dir/$binary_index_dir/Packages"
+cmp "$REPO_DIR/Packages.gz" "$dist_dir/$binary_index_dir/Packages.gz"
 
 python3 - "$REPO_DIR" "$selected_deb" "$PACKAGE_NAME" "$EXPECTED_ARCH" <<'PY'
 import hashlib
@@ -289,22 +307,31 @@ assert package_path.is_file(), fields["Filename"]
 assert package_path.stat().st_size == int(fields["Size"])
 assert hashlib.sha256(package_path.read_bytes()).hexdigest() == fields["SHA256"]
 
-release = (repo / "Release").read_text()
-for checksum_type, algorithm in (("MD5Sum", hashlib.md5), ("SHA256", hashlib.sha256)):
-    section = release.split(f"{checksum_type}:\n", 1)[1]
-    if checksum_type == "MD5Sum":
-        section = section.split("\nSHA256:\n", 1)[0]
-    for line in section.splitlines():
-        if not line.strip():
-            continue
-        expected_hash, expected_size, filename = line.split()
-        content = (repo / filename).read_bytes()
-        assert str(len(content)) == expected_size, filename
-        assert algorithm(content).hexdigest() == expected_hash, filename
+release_paths = [
+    (repo / "Release", repo),
+    (
+        repo / "dists/stable/Release",
+        repo / "dists/stable",
+    ),
+]
+for release_path, release_root in release_paths:
+    release = release_path.read_text()
+    for checksum_type, algorithm in (("MD5Sum", hashlib.md5), ("SHA256", hashlib.sha256)):
+        section = release.split(f"{checksum_type}:\n", 1)[1]
+        if checksum_type == "MD5Sum":
+            section = section.split("\nSHA256:\n", 1)[0]
+        for line in section.splitlines():
+            if not line.strip():
+                continue
+            expected_hash, expected_size, filename = line.split()
+            content = (release_root / filename).read_bytes()
+            assert str(len(content)) == expected_size, filename
+            assert algorithm(content).hexdigest() == expected_hash, filename
 
 print(
     f"Validated {fields['Package']} {fields['Version']} "
-    f"({fields['Architecture']}) at {fields['Filename']}"
+    f"({fields['Architecture']}) at {fields['Filename']} "
+    "in flat and stable distributions"
 )
 PY
 
