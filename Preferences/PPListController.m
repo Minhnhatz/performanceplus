@@ -2,6 +2,7 @@
 #import <Preferences/PSSpecifier.h>
 #import <Preferences/PSTableCell.h>
 #import "../PPManager.h"
+#import <errno.h>
 #import <spawn.h>
 #import <sys/wait.h>
 
@@ -76,7 +77,7 @@ extern char **environ;
     [specifiers addObject:[self valueSpecifierWithTitle:@"PerformancePlus"
                                                   value:@"Device information and user preferences"]];
     [specifiers addObject:[self valueSpecifierWithTitle:@"Version"
-                                                  value:@"1.0.0"]];
+                                                  value:@"1.0.1"]];
     [specifiers addObject:[self valueSpecifierWithTitle:@"Developer"
                                                   value:@"Blue"]];
     [specifiers addObject:[self valueSpecifierWithTitle:@"Source"
@@ -106,13 +107,17 @@ extern char **environ;
                                    value:(NSString *)value {
     PSSpecifier *specifier =
         [PSSpecifier preferenceSpecifierNamed:title
-                                        target:nil
+                                        target:self
                                            set:nil
-                                           get:nil
+                                           get:@selector(valueForSpecifier:)
                                         detail:nil
                                           cell:PSTitleValueCell
                                           edit:nil];
-    [specifier setProperty:value forKey:@"value"];
+    [specifier setProperty:(
+        [value isKindOfClass:NSString.class] && value.length > 0
+            ? value
+            : @"Unavailable")
+                    forKey:@"value"];
     return specifier;
 }
 
@@ -135,12 +140,18 @@ extern char **environ;
     if (![key isKindOfClass:NSString.class]) {
         return defaultValue ?: @NO;
     }
-
     PPManager *manager = PPManager.sharedManager;
     if ([key isEqualToString:@"enabled"]) {
         return @(manager.isEnabled);
     }
     return @([manager isOptionEnabled:key]);
+}
+
+- (id)valueForSpecifier:(PSSpecifier *)specifier {
+    id value = [specifier propertyForKey:@"value"];
+    return [value isKindOfClass:NSString.class] && [value length] > 0
+        ? value
+        : @"Unavailable";
 }
 
 - (void)setPreferenceValue:(id)value specifier:(PSSpecifier *)specifier {
@@ -185,15 +196,14 @@ extern char **environ;
 }
 
 - (void)respring {
+    const char *executable = "/var/jb/usr/bin/sbreload";
     pid_t process = 0;
     char *arguments[] = {
-        "/usr/bin/killall",
-        "-TERM",
-        "SpringBoard",
+        (char *)executable,
         NULL
     };
     int spawnError = posix_spawn(&process,
-                                 arguments[0],
+                                 executable,
                                  NULL,
                                  NULL,
                                  arguments,
@@ -201,16 +211,23 @@ extern char **environ;
     if (spawnError != 0) {
         [self showMessage:@"Respring Failed"
                   message:[NSString stringWithFormat:
-                           @"Could not start killall (error %d).", spawnError]];
+                           @"Could not start Dopamine's sbreload at %s (error %d).",
+                           executable,
+                           spawnError]];
         return;
     }
 
     int status = 0;
-    if (waitpid(process, &status, 0) == -1 ||
+    pid_t waitedProcess;
+    do {
+        waitedProcess = waitpid(process, &status, 0);
+    } while (waitedProcess == -1 && errno == EINTR);
+
+    if (waitedProcess == -1 ||
         !WIFEXITED(status) ||
         WEXITSTATUS(status) != 0) {
         [self showMessage:@"Respring Failed"
-                  message:@"SpringBoard could not be restarted. Check jailbreak permissions."];
+                  message:@"Dopamine's sbreload could not restart SpringBoard."];
     }
 }
 

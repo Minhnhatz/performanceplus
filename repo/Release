@@ -2,13 +2,13 @@ Origin: PerformancePlus
 Label: PerformancePlus
 Suite: stable
 Codename: stable
-Date: Wed, 07 Oct 2026 17:35:58 +0000
+Date: Wed, 07 Oct 2026 17:49:51 +0000
 Architectures: iphoneos-arm64
 Components: main
 Description: PerformancePlus jailbreak tweak repository
 MD5Sum:
- 2cb074df5cf2813669d8620b4d63ba73 548 Packages
- 246abe06a001a17c081d135f43fdb309 380 Packages.gz
+ b0886a5309ca47c681f2bf5b416d075c 548 Packages
+ a4dc765a109207d8502b418af8c3a091 379 Packages.gz
 SHA256:
- f4c08b31f80dbc00d35638c330889005bfea65eb24b505a72c1fb1b84445a81a 548 Packages
- f2f00b1bf52c8bf52fa16eb6f9e36ef357b4748f7b45dc440b54eba4c837e8d6 380 Packages.gz
+ 745cb07747684c3d01dbda8aaa2cc72f86914aa97995f2e504754cd463d4e868 548 Packages
+ 43281b4b87717f351cfa4c7e6db178101c574bcf28ef92066ed4bd5a19ceae4e 379 Packages.gz
