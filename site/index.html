@@ -18,7 +18,7 @@
     <nav class="nav-links" aria-label="Main navigation">
       <a href="#package">The package</a>
       <a href="#install">How to install</a>
-      <a class="nav-github" href="https://github.com/minhnhatz/performanceplus" target="_blank" rel="noreferrer">
+      <a class="nav-github" href="https://github.com/{{GITHUB_REPOSITORY}}" target="_blank" rel="noreferrer">
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .9a11.1 11.1 0 0 0-3.51 21.63c.56.1.76-.24.76-.54v-2.1c-3.1.68-3.76-1.31-3.76-1.31-.5-1.3-1.24-1.65-1.24-1.65-1.01-.69.08-.68.08-.68 1.12.08 1.71 1.15 1.71 1.15.99 1.7 2.59 1.21 3.22.93.1-.72.39-1.21.7-1.49-2.48-.28-5.09-1.24-5.09-5.52 0-1.22.44-2.21 1.15-2.99-.12-.28-.5-1.42.11-2.96 0 0 .94-.3 3.06 1.14a10.66 10.66 0 0 1 5.57 0c2.13-1.44 3.06-1.14 3.06-1.14.61 1.54.23 2.68.12 2.96.71.78 1.14 1.77 1.14 2.99 0 4.29-2.62 5.23-5.11 5.51.4.35.75 1.03.75 2.08v3.08c0 .3.2.65.77.54A11.1 11.1 0 0 0 12 .9Z"/></svg>
         Source
       </a>
@@ -87,16 +87,16 @@
         <div class="package-main">
           <span class="package-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 4.5 7.2v9.6L12 21l7.5-4.2V7.2L12 3Z"/><path d="m4.8 7.4 7.2 4 7.2-4M12 11.5V21"/></svg></span>
           <div>
-            <h3 class="package-title">PerformancePlus</h3>
-            <p class="package-id">Performance and system status tweak</p>
+            <h3 class="package-title">{{PACKAGE_NAME}}</h3>
+            <p class="package-id">{{PACKAGE_DESCRIPTION}}</p>
             <div class="package-meta">
-              <span class="pill">Version 1.0.0</span>
-              <span class="pill">iphoneos-arm64</span>
+              <span class="pill">Version {{PACKAGE_VERSION}}</span>
+              <span class="pill">{{ARCHITECTURE}}</span>
               <span class="pill">Rootless</span>
             </div>
           </div>
         </div>
-        <a class="button button-secondary package-download" href="pool/main/c/com.blue.performanceplus/com.blue.performanceplus_1.0.0_iphoneos-arm64.deb" download>
+        <a class="button button-secondary package-download" href="pool/main/c/{{PACKAGE_ID}}/{{PACKAGE_FILENAME}}" download>
           Download .deb
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M5 20h14"/></svg>
         </a>
@@ -141,8 +141,8 @@
             <li>Refresh sources, search PerformancePlus, then install.</li>
           </ol>
           <div class="source-copy">
-            <code>https://minhnhatz.github.io/performanceplus/</code>
-            <button type="button" data-copy-source="https://minhnhatz.github.io/performanceplus/" aria-label="Copy repository URL">Copy URL</button>
+            <code>{{PAGES_URL}}</code>
+            <button type="button" data-copy-source="{{PAGES_URL}}" aria-label="Copy repository URL">Copy URL</button>
             <span class="sr-only" id="copy-status" aria-live="polite"></span>
           </div>
         </div>
@@ -151,12 +151,12 @@
   </main>
 
   <footer class="shell footer">
-    <p>© minhnhatz · PerformancePlus</p>
+    <p>© {{GITHUB_OWNER}} · PerformancePlus</p>
     <nav class="footer-links" aria-label="Repository links">
       <a href="Release">Release</a>
       <a href="Packages">Packages</a>
       <a href="Packages.gz">Packages.gz</a>
-      <a href="https://github.com/minhnhatz/performanceplus" target="_blank" rel="noreferrer">GitHub source</a>
+      <a href="https://github.com/{{GITHUB_REPOSITORY}}" target="_blank" rel="noreferrer">GitHub source</a>
     </nav>
   </footer>
 </body>

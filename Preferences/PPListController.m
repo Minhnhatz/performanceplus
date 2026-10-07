@@ -375,7 +375,7 @@ didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
     }
 
     if ([kind isEqualToString:@"github"]) {
-        NSURL *url = [NSURL URLWithString:@"https://github.com/Minhnhatz/PerformancePlus"];
+        NSURL *url = [NSURL URLWithString:@"https://github.com/Minhnhatz/performanceplus"];
         [UIApplication.sharedApplication openURL:url
                                          options:@{}
                                completionHandler:^(BOOL success) {
