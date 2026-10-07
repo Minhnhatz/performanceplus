@@ -4,8 +4,6 @@
 
 + (instancetype)sharedManager;
 
-- (void)start;
-
 - (BOOL)isEnabled;
 - (void)setEnabled:(BOOL)enabled;
 - (BOOL)isOptionEnabled:(NSString *)option;

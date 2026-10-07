@@ -1,8 +1,4 @@
-#import <UIKit/UIKit.h>
-#import "PPManager.h"
+#import <Foundation/Foundation.h>
 
 %ctor {
-    @autoreleasepool {
-        [[PPManager sharedManager] start];
-    }
 }

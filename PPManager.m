@@ -2,9 +2,30 @@
 #import <UIKit/UIKit.h>
 #import <sys/sysctl.h>
 #import <mach/mach.h>
+#import <math.h>
 
 static NSString * const kPPDomain = @"com.blue.performanceplus";
 static NSString * const kPPEnabledKey = @"enabled";
+static NSString * const kPPPerformanceModeKey = @"performanceMode";
+static NSString * const kPPMemoryOptimizationKey = @"memoryOptimization";
+static NSString * const kPPAppLaunchOptimizationKey = @"appLaunchOptimization";
+
+static NSUserDefaults *PPPreferences(void) {
+    return [[NSUserDefaults alloc] initWithSuiteName:kPPDomain];
+}
+
+static NSSet<NSString *> *PPOptionKeys(void) {
+    static NSSet<NSString *> *keys;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        keys = [NSSet setWithObjects:
+            kPPPerformanceModeKey,
+            kPPMemoryOptimizationKey,
+            kPPAppLaunchOptimizationKey,
+            nil];
+    });
+    return keys;
+}
 
 @implementation PPManager
 
@@ -17,53 +38,52 @@ static NSString * const kPPEnabledKey = @"enabled";
     return manager;
 }
 
-- (void)start {
-    NSUserDefaults *defaults =
-        [[NSUserDefaults alloc] initWithSuiteName:kPPDomain];
-    [defaults registerDefaults:@{
-        kPPEnabledKey: @YES,
-        @"performanceMode": @NO,
-        @"memoryOptimization": @NO,
-        @"appLaunchOptimization": @NO
-    }];
-}
-
 - (BOOL)isEnabled {
-    NSUserDefaults *defaults =
-        [[NSUserDefaults alloc] initWithSuiteName:kPPDomain];
-
+    NSUserDefaults *defaults = PPPreferences();
+    if (!defaults) {
+        return YES;
+    }
     NSNumber *value = [defaults objectForKey:kPPEnabledKey];
-    return value ? value.boolValue : YES;
+    return [value isKindOfClass:NSNumber.class] ? value.boolValue : YES;
 }
 
 - (void)setEnabled:(BOOL)enabled {
-    NSUserDefaults *defaults =
-        [[NSUserDefaults alloc] initWithSuiteName:kPPDomain];
-
+    NSUserDefaults *defaults = PPPreferences();
+    if (!defaults) {
+        return;
+    }
     [defaults setBool:enabled forKey:kPPEnabledKey];
-    [defaults synchronize];
 }
 
 - (BOOL)isOptionEnabled:(NSString *)option {
-    NSUserDefaults *defaults =
-        [[NSUserDefaults alloc] initWithSuiteName:kPPDomain];
-    return [defaults boolForKey:option];
+    if (![option isKindOfClass:NSString.class] ||
+        ![PPOptionKeys() containsObject:option]) {
+        return NO;
+    }
+    NSUserDefaults *defaults = PPPreferences();
+    return defaults ? [defaults boolForKey:option] : NO;
 }
 
 - (void)setOption:(NSString *)option enabled:(BOOL)enabled {
-    NSUserDefaults *defaults =
-        [[NSUserDefaults alloc] initWithSuiteName:kPPDomain];
+    if (![option isKindOfClass:NSString.class] ||
+        ![PPOptionKeys() containsObject:option]) {
+        return;
+    }
+    NSUserDefaults *defaults = PPPreferences();
+    if (!defaults) {
+        return;
+    }
     [defaults setBool:enabled forKey:option];
-    [defaults synchronize];
 }
 
 - (NSString *)deviceModel {
     char machine[256] = {0};
     size_t size = sizeof(machine);
-    NSString *identifier = nil;
+    NSString *identifier = @"";
 
     if (sysctlbyname("hw.machine", machine, &size, NULL, 0) == 0) {
-        identifier = [NSString stringWithUTF8String:machine];
+        machine[sizeof(machine) - 1] = '\0';
+        identifier = [NSString stringWithUTF8String:machine] ?: @"";
     }
 
     NSString *model = UIDevice.currentDevice.model ?: @"Unknown";
@@ -77,23 +97,34 @@ static NSString * const kPPEnabledKey = @"enabled";
 }
 
 - (NSString *)cpuStatus {
-    return [NSString stringWithFormat:@"%ld logical cores",
-            (long)NSProcessInfo.processInfo.processorCount];
+    NSUInteger processorCount = NSProcessInfo.processInfo.processorCount;
+    return processorCount > 0
+        ? [NSString stringWithFormat:@"%lu logical cores",
+           (unsigned long)processorCount]
+        : @"Unavailable";
 }
 
 - (NSString *)memoryStatus {
     mach_msg_type_number_t count = HOST_VM_INFO64_COUNT;
-    vm_statistics64_data_t vmStats;
-
-    if (host_statistics64(mach_host_self(),
-                           HOST_VM_INFO64,
-                           (host_info64_t)&vmStats,
-                           &count) != KERN_SUCCESS) {
+    vm_statistics64_data_t vmStats = {0};
+    mach_port_t host = mach_host_self();
+    if (host == MACH_PORT_NULL) {
         return @"Unavailable";
     }
 
+    kern_return_t statisticsResult = host_statistics64(host,
+                           HOST_VM_INFO64,
+                           (host_info64_t)&vmStats,
+                           &count);
     vm_size_t pageSize = 0;
-    host_page_size(mach_host_self(), &pageSize);
+    kern_return_t pageSizeResult = host_page_size(host, &pageSize);
+    mach_port_deallocate(mach_task_self(), host);
+
+    if (statisticsResult != KERN_SUCCESS ||
+        pageSizeResult != KERN_SUCCESS ||
+        pageSize == 0) {
+        return @"Unavailable";
+    }
 
     unsigned long long freeMemory =
         (unsigned long long)vmStats.free_count * pageSize;
@@ -121,15 +152,11 @@ static NSString * const kPPEnabledKey = @"enabled";
 
 - (NSString *)batteryStatus {
     UIDevice *device = UIDevice.currentDevice;
-    BOOL wasMonitoring = device.batteryMonitoringEnabled;
-    device.batteryMonitoringEnabled = YES;
-
     float level = device.batteryLevel;
     UIDeviceBatteryState state = device.batteryState;
-    device.batteryMonitoringEnabled = wasMonitoring;
 
-    if (level < 0.0f) {
-        return @"Battery information unavailable";
+    if (level < 0.0f || level > 1.0f) {
+        return @"Unavailable";
     }
 
     NSString *stateDescription = @"Unknown state";
@@ -152,21 +179,21 @@ static NSString * const kPPEnabledKey = @"enabled";
 }
 
 - (NSString *)thermalStatus {
-    NSProcessInfoThermalState state =
-        NSProcessInfo.processInfo.thermalState;
-
-    switch (state) {
-        case NSProcessInfoThermalStateNominal:
-            return @"Nominal";
-        case NSProcessInfoThermalStateFair:
-            return @"Fair";
-        case NSProcessInfoThermalStateSerious:
-            return @"Serious";
-        case NSProcessInfoThermalStateCritical:
-            return @"Critical";
+    if (@available(iOS 11.0, *)) {
+        NSProcessInfoThermalState state =
+            NSProcessInfo.processInfo.thermalState;
+        switch (state) {
+            case NSProcessInfoThermalStateNominal:
+                return @"Nominal";
+            case NSProcessInfoThermalStateFair:
+                return @"Fair";
+            case NSProcessInfoThermalStateSerious:
+                return @"Serious";
+            case NSProcessInfoThermalStateCritical:
+                return @"Critical";
+        }
     }
-
-    return @"Unknown";
+    return @"Unavailable";
 }
 
 - (NSString *)powerStatus {
@@ -178,6 +205,9 @@ static NSString * const kPPEnabledKey = @"enabled";
 - (NSString *)uptimeStatus {
     NSTimeInterval seconds =
         NSProcessInfo.processInfo.systemUptime;
+    if (!isfinite(seconds) || seconds < 0.0) {
+        return @"Unavailable";
+    }
 
     NSInteger totalMinutes = (NSInteger)(seconds / 60.0);
     NSInteger days = totalMinutes / (60 * 24);

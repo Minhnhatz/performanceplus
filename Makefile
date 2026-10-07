@@ -7,7 +7,7 @@ include $(THEOS)/makefiles/common.mk
 
 TWEAK_NAME = PerformancePlus
 
-PerformancePlus_FILES = Tweak.x PPManager.m
+PerformancePlus_FILES = Tweak.x
 PerformancePlus_CFLAGS = -fobjc-arc
 PerformancePlus_FRAMEWORKS = UIKit Foundation
 PerformancePlus_INSTALL_PATH = /Library/MobileSubstrate/DynamicLibraries

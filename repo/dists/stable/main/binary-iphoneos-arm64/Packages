@@ -2,13 +2,13 @@ Package: com.blue.performanceplus
 Version: 1.0.0
 Architecture: iphoneos-arm64
 Maintainer: Blue
-Installed-Size: 408
+Installed-Size: 344
 Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
 Filename: pool/main/c/com.blue.performanceplus/com.blue.performanceplus_1.0.0_iphoneos-arm64.deb
-Size: 27622
-MD5sum: 307702c46d7e9b023035f1b7269bda87
-SHA1: 9001333dbb6221686cd4d283556c4fa72eb2a1b4
-SHA256: 17ed309de54f0545226bc097c9fb79feb47254d84f0e7ab6cbec59f3941580a2
+Size: 14874
+MD5sum: 6f2767862f3569fc8de19df02893f3b9
+SHA1: 8cbaa1dd46d48dfc03b6daa4f61f8d7b0d3cd8d6
+SHA256: 204586b4535f6762d3635c1891b9922ea83b91fc9c0f5c84ca7e6b9a9eaf2269
 Section: Tweaks
 Description: Performance and system status tweak
 Author: Blue

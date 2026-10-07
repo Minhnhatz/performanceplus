@@ -1,452 +1,194 @@
 #import "PPListController.h"
-#import <UIKit/UIKit.h>
+#import <Preferences/PSSpecifier.h>
+#import <Preferences/PSTableCell.h>
+#import "../PPManager.h"
 #import <spawn.h>
 #import <sys/wait.h>
-#import "../PPManager.h"
 
 extern char **environ;
 
-@interface PPPreferenceCell : UITableViewCell
-
-- (void)configureWithTitle:(NSString *)title
-                  subtitle:(NSString *)subtitle
-                    symbol:(NSString *)symbol
-                 tintColor:(UIColor *)tintColor
-              accessoryView:(UIView *)accessoryView
-           accessoryType:(UITableViewCellAccessoryType)accessoryType;
-
-@end
-
-@implementation PPPreferenceCell {
-    UIImageView *_symbolView;
-    UILabel *_titleLabel;
-    UILabel *_subtitleLabel;
-}
-
-- (instancetype)initWithStyle:(UITableViewCellStyle)style
-              reuseIdentifier:(NSString *)reuseIdentifier {
-    self = [super initWithStyle:style reuseIdentifier:reuseIdentifier];
-    if (self) {
-        self.backgroundColor = UIColor.secondarySystemGroupedBackgroundColor;
-        self.selectionStyle = UITableViewCellSelectionStyleNone;
-
-        _symbolView = [[UIImageView alloc] initWithFrame:CGRectZero];
-        _symbolView.translatesAutoresizingMaskIntoConstraints = NO;
-        _symbolView.contentMode = UIViewContentModeCenter;
-        _symbolView.tintColor = UIColor.whiteColor;
-        _symbolView.layer.cornerRadius = 17.0;
-        _symbolView.clipsToBounds = YES;
-        [self.contentView addSubview:_symbolView];
-
-        _titleLabel = [[UILabel alloc] initWithFrame:CGRectZero];
-        _titleLabel.translatesAutoresizingMaskIntoConstraints = NO;
-        _titleLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleBody];
-        _titleLabel.adjustsFontForContentSizeCategory = YES;
-        _titleLabel.textColor = UIColor.labelColor;
-
-        _subtitleLabel = [[UILabel alloc] initWithFrame:CGRectZero];
-        _subtitleLabel.translatesAutoresizingMaskIntoConstraints = NO;
-        _subtitleLabel.font =
-            [UIFont preferredFontForTextStyle:UIFontTextStyleSubheadline];
-        _subtitleLabel.adjustsFontForContentSizeCategory = YES;
-        _subtitleLabel.textColor = UIColor.secondaryLabelColor;
-        _subtitleLabel.numberOfLines = 0;
-
-        UIStackView *labels =
-            [[UIStackView alloc] initWithArrangedSubviews:@[
-                _titleLabel, _subtitleLabel
-            ]];
-        labels.translatesAutoresizingMaskIntoConstraints = NO;
-        labels.axis = UILayoutConstraintAxisVertical;
-        labels.spacing = 3.0;
-        [self.contentView addSubview:labels];
-
-        [NSLayoutConstraint activateConstraints:@[
-            [_symbolView.leadingAnchor
-                constraintEqualToAnchor:self.contentView.layoutMarginsGuide.leadingAnchor],
-            [_symbolView.centerYAnchor
-                constraintEqualToAnchor:self.contentView.centerYAnchor],
-            [_symbolView.widthAnchor constraintEqualToConstant:34.0],
-            [_symbolView.heightAnchor constraintEqualToConstant:34.0],
-            [labels.leadingAnchor
-                constraintEqualToAnchor:_symbolView.trailingAnchor
-                               constant:12.0],
-            [labels.trailingAnchor
-                constraintEqualToAnchor:self.contentView.layoutMarginsGuide.trailingAnchor],
-            [labels.topAnchor
-                constraintGreaterThanOrEqualToAnchor:self.contentView.topAnchor
-                                             constant:11.0],
-            [labels.bottomAnchor
-                constraintLessThanOrEqualToAnchor:self.contentView.bottomAnchor
-                                          constant:-11.0],
-            [labels.centerYAnchor
-                constraintEqualToAnchor:self.contentView.centerYAnchor]
-        ]];
-    }
-    return self;
-}
-
-- (void)configureWithTitle:(NSString *)title
-                  subtitle:(NSString *)subtitle
-                    symbol:(NSString *)symbol
-                 tintColor:(UIColor *)tintColor
-             accessoryView:(UIView *)accessoryView
-              accessoryType:(UITableViewCellAccessoryType)accessoryType {
-    _titleLabel.text = title;
-    _subtitleLabel.text = subtitle;
-    _symbolView.backgroundColor = tintColor;
-    _symbolView.image = [UIImage systemImageNamed:symbol] ?:
-        [UIImage systemImageNamed:@"gearshape.fill"];
-    self.accessoryView = accessoryView;
-    self.accessoryType = accessoryType;
-}
-
-@end
-
-@interface PPListController () <UITableViewDataSource, UITableViewDelegate>
-@property (nonatomic, strong) UITableView *settingsTableView;
-@property (nonatomic, copy) NSArray<NSArray<NSDictionary<NSString *, id> *> *> *sections;
+@interface PPListController ()
+@property (nonatomic) BOOL hasLoadedDeviceStatus;
 @end
 
 @implementation PPListController
 
-- (void)loadView {
-    UITableView *tableView =
-        [[UITableView alloc] initWithFrame:CGRectZero
-                                     style:UITableViewStyleInsetGrouped];
-    tableView.backgroundColor = UIColor.systemGroupedBackgroundColor;
-    tableView.dataSource = self;
-    tableView.delegate = self;
-    tableView.rowHeight = UITableViewAutomaticDimension;
-    tableView.estimatedRowHeight = 68.0;
-    tableView.separatorInset = UIEdgeInsetsMake(0.0, 58.0, 0.0, 0.0);
-    [tableView registerClass:PPPreferenceCell.class
-      forCellReuseIdentifier:@"PPPreferenceCell"];
-
-    self.settingsTableView = tableView;
-    self.view = tableView;
-    self.title = @"PerformancePlus";
-    self.navigationItem.largeTitleDisplayMode =
-        UINavigationItemLargeTitleDisplayModeAlways;
-    [self rebuildSections];
-}
-
-- (NSDictionary<NSString *, id> *)rowWithTitle:(NSString *)title
-                                      subtitle:(NSString *)subtitle
-                                        symbol:(NSString *)symbol
-                                         color:(UIColor *)color
-                                          kind:(NSString *)kind {
-    return @{
-        @"title": title,
-        @"subtitle": subtitle,
-        @"symbol": symbol,
-        @"color": color,
-        @"kind": kind
-    };
-}
-
-- (NSDictionary<NSString *, id> *)switchRowWithTitle:(NSString *)title
-                                             subtitle:(NSString *)subtitle
-                                               symbol:(NSString *)symbol
-                                                color:(UIColor *)color
-                                                  key:(NSString *)key {
-    NSMutableDictionary<NSString *, id> *row = [[self
-        rowWithTitle:title
-            subtitle:subtitle
-              symbol:symbol
-               color:color
-                kind:@"switch"] mutableCopy];
-    row[@"key"] = key;
-    return row;
-}
-
-- (void)rebuildSections {
-    PPManager *manager = PPManager.sharedManager;
-    self.sections = @[
-        @[
-            [self switchRowWithTitle:@"Enable PerformancePlus"
-                            subtitle:@"Stores your preference without changing iOS thermal or kernel controls."
-                              symbol:@"bolt.fill"
-                               color:UIColor.systemBlueColor
-                                 key:@"enabled"],
-            [self switchRowWithTitle:@"Performance Mode"
-                            subtitle:@"Userspace preference only; iOS continues to manage CPU scheduling."
-                              symbol:@"speedometer"
-                               color:UIColor.systemOrangeColor
-                                 key:@"performanceMode"],
-            [self switchRowWithTitle:@"Memory Optimization"
-                            subtitle:@"Preference only; this does not purge memory or alter kernel behavior."
-                              symbol:@"memorychip.fill"
-                               color:UIColor.systemPurpleColor
-                                 key:@"memoryOptimization"],
-            [self switchRowWithTitle:@"App Launch Optimization"
-                            subtitle:@"Preference only; system app-launch scheduling is unchanged."
-                              symbol:@"arrow.up.forward.app.fill"
-                               color:UIColor.systemGreenColor
-                                 key:@"appLaunchOptimization"]
-        ],
-        @[
-            [self rowWithTitle:@"CPU Information"
-                      subtitle:manager.cpuStatus
-                        symbol:@"cpu"
-                         color:UIColor.systemRedColor
-                          kind:@"device-cpu"],
-            [self rowWithTitle:@"Memory Information"
-                      subtitle:manager.memoryStatus
-                        symbol:@"memorychip"
-                         color:UIColor.systemPurpleColor
-                          kind:@"device-memory"],
-            [self rowWithTitle:@"Battery Information"
-                      subtitle:manager.batteryStatus
-                        symbol:@"battery.100percent"
-                         color:UIColor.systemGreenColor
-                          kind:@"device-battery"],
-            [self rowWithTitle:@"iOS Version"
-                      subtitle:manager.systemVersion
-                        symbol:@"gear"
-                         color:UIColor.systemGrayColor
-                          kind:@"device-ios"],
-            [self rowWithTitle:@"Device Model"
-                      subtitle:manager.deviceModel
-                        symbol:@"iphone"
-                         color:UIColor.systemTealColor
-                          kind:@"device-model"]
-        ],
-        @[
-            [self rowWithTitle:@"Loaded Tweak Status"
-                      subtitle:manager.loadedTweakStatus
-                        symbol:@"square.stack.3d.up.fill"
-                         color:UIColor.systemBlueColor
-                          kind:@"status-loaded"],
-            [self rowWithTitle:@"Possible Conflicts"
-                      subtitle:manager.possibleConflictStatus
-                        symbol:@"exclamationmark.triangle.fill"
-                         color:UIColor.systemOrangeColor
-                          kind:@"status-conflicts"],
-            [self rowWithTitle:@"Installed Tweak Count"
-                      subtitle:manager.installedTweakCountStatus
-                        symbol:@"shippingbox.fill"
-                         color:UIColor.systemIndigoColor
-                          kind:@"status-count"],
-            [self rowWithTitle:@"Refresh Status"
-                      subtitle:@"Update device and tweak status information."
-                        symbol:@"arrow.clockwise"
-                         color:UIColor.systemCyanColor
-                          kind:@"refresh"]
-        ],
-        @[
-            [self rowWithTitle:@"Respring"
-                      subtitle:@"Restart SpringBoard to reload injected tweaks."
-                        symbol:@"arrow.triangle.2.circlepath"
-                         color:UIColor.systemRedColor
-                          kind:@"respring"],
-            [self rowWithTitle:@"Reload Preferences"
-                      subtitle:@"Refresh the values shown on this page."
-                        symbol:@"slider.horizontal.3"
-                         color:UIColor.systemGrayColor
-                          kind:@"refresh"]
-        ],
-        @[
-            [self rowWithTitle:@"PerformancePlus"
-                      subtitle:@"Performance and system status controls"
-                        symbol:@"bolt.fill"
-                         color:UIColor.systemBlueColor
-                          kind:@"about"],
-            [self rowWithTitle:@"Version"
-                      subtitle:@"1.0.0"
-                        symbol:@"number"
-                         color:UIColor.systemGrayColor
-                          kind:@"about"],
-            [self rowWithTitle:@"Developer"
-                      subtitle:@"Blue"
-                        symbol:@"person.fill"
-                         color:UIColor.systemIndigoColor
-                          kind:@"about"],
-            [self rowWithTitle:@"GitHub"
-                      subtitle:@"View source and report issues"
-                        symbol:@"chevron.left.forwardslash.chevron.right"
-                         color:UIColor.systemGrayColor
-                          kind:@"github"]
-        ]
-    ];
-}
-
-- (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return self.sections.count;
-}
-
-- (NSInteger)tableView:(UITableView *)tableView
- numberOfRowsInSection:(NSInteger)section {
-    return self.sections[section].count;
-}
-
-- (NSString *)tableView:(UITableView *)tableView
-    titleForHeaderInSection:(NSInteger)section {
-    NSArray<NSString *> *titles = @[
-        @"PERFORMANCE",
-        @"DEVICE STATUS",
-        @"TWEAK STATUS",
-        @"ACTIONS",
-        @"ABOUT"
-    ];
-    return titles[section];
-}
-
-- (UIView *)tableView:(UITableView *)tableView
-    viewForHeaderInSection:(NSInteger)section {
-    UILabel *label = [[UILabel alloc] initWithFrame:CGRectZero];
-    label.text = [self tableView:tableView titleForHeaderInSection:section];
-    label.font = [UIFont preferredFontForTextStyle:UIFontTextStyleHeadline];
-    label.adjustsFontForContentSizeCategory = YES;
-    label.textColor = UIColor.secondaryLabelColor;
-    return label;
-}
-
-- (CGFloat)tableView:(UITableView *)tableView
-    heightForHeaderInSection:(NSInteger)section {
-    return 42.0;
-}
-
-- (UITableViewCell *)tableView:(UITableView *)tableView
-         cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    NSDictionary<NSString *, id> *row = self.sections[indexPath.section][indexPath.row];
-    PPPreferenceCell *cell =
-        [tableView dequeueReusableCellWithIdentifier:@"PPPreferenceCell"
-                                        forIndexPath:indexPath];
-    NSString *key = row[@"key"];
-    NSString *kind = row[@"kind"];
-    UIView *accessoryView = nil;
-    UITableViewCellAccessoryType accessoryType =
-        UITableViewCellAccessoryNone;
-
-    if ([kind isEqualToString:@"switch"]) {
-        UISwitch *toggle = [[UISwitch alloc] initWithFrame:CGRectZero];
-        toggle.on = [key isEqualToString:@"enabled"]
-            ? PPManager.sharedManager.isEnabled
-            : [PPManager.sharedManager isOptionEnabled:key];
-        toggle.accessibilityLabel = row[@"title"];
-        toggle.accessibilityIdentifier = key;
-        [toggle addTarget:self
-                   action:@selector(switchValueChanged:)
-         forControlEvents:UIControlEventValueChanged];
-        accessoryView = toggle;
-    } else if ([kind hasPrefix:@"device-"] ||
-               [kind hasPrefix:@"status-"] ||
-               [kind isEqualToString:@"respring"] ||
-               [kind isEqualToString:@"github"]) {
-        accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+- (NSArray *)specifiers {
+    if (_specifiers) {
+        return _specifiers;
     }
 
-    [cell configureWithTitle:row[@"title"]
-                    subtitle:row[@"subtitle"]
-                      symbol:row[@"symbol"]
-                   tintColor:row[@"color"]
-                accessoryView:accessoryView
-             accessoryType:accessoryType];
-    return cell;
+    NSMutableArray<PSSpecifier *> *specifiers = [NSMutableArray array];
+    [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"PERFORMANCE"]];
+
+    PSSpecifier *performanceGroup = specifiers.lastObject;
+    [performanceGroup setProperty:
+        @"These switches save preferences only. They do not change CPU scheduling, memory use, or app launch behavior."
+                      forKey:@"footerText"];
+
+    [specifiers addObject:[self switchSpecifierWithTitle:@"Enable PerformancePlus"
+                                                     key:@"enabled"
+                                                default:@YES]];
+    [specifiers addObject:[self switchSpecifierWithTitle:@"Performance Mode"
+                                                     key:@"performanceMode"
+                                                default:@NO]];
+    [specifiers addObject:[self switchSpecifierWithTitle:@"Memory Optimization"
+                                                     key:@"memoryOptimization"
+                                                default:@NO]];
+    [specifiers addObject:[self switchSpecifierWithTitle:@"App Launch Optimization"
+                                                     key:@"appLaunchOptimization"
+                                                default:@NO]];
+
+    [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"DEVICE STATUS"]];
+    PPManager *manager = self.hasLoadedDeviceStatus ? PPManager.sharedManager : nil;
+    [specifiers addObject:[self valueSpecifierWithTitle:@"CPU Information"
+                                                  value:manager.cpuStatus ?: @"Select Refresh Device Status"]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Memory Information"
+                                                  value:manager.memoryStatus ?: @"Select Refresh Device Status"]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Battery Information"
+                                                  value:manager.batteryStatus ?: @"Select Refresh Device Status"]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Thermal State"
+                                                  value:manager.thermalStatus ?: @"Select Refresh Device Status"]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Power Mode"
+                                                  value:manager.powerStatus ?: @"Select Refresh Device Status"]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Uptime"
+                                                  value:manager.uptimeStatus ?: @"Select Refresh Device Status"]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"iOS Version"
+                                                  value:manager.systemVersion ?: @"Select Refresh Device Status"]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Device Model"
+                                                  value:manager.deviceModel ?: @"Select Refresh Device Status"]];
+
+    [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"TWEAK STATUS"]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Loaded Tweak Status"
+                                                  value:manager.loadedTweakStatus ?: @"Select Refresh Device Status"]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Possible Conflicts"
+                                                  value:manager.possibleConflictStatus ?: @"Select Refresh Device Status"]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Installed Tweak Count"
+                                                  value:manager.installedTweakCountStatus ?: @"Select Refresh Device Status"]];
+
+    [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"ACTIONS"]];
+    [specifiers addObject:[self buttonSpecifierWithTitle:@"Refresh Device Status"
+                                                  action:@selector(refreshDeviceStatus)]];
+    [specifiers addObject:[self buttonSpecifierWithTitle:@"Respring"
+                                                  action:@selector(confirmRespring)]];
+
+    [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"ABOUT"]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"PerformancePlus"
+                                                  value:@"Device information and user preferences"]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Version"
+                                                  value:@"1.0.0"]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Developer"
+                                                  value:@"Blue"]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Source"
+                                                  value:@"github.com/Minhnhatz/performanceplus"]];
+
+    _specifiers = specifiers;
+    return _specifiers;
 }
 
-- (void)switchValueChanged:(UISwitch *)toggle {
-    NSString *key = toggle.accessibilityIdentifier;
+- (PSSpecifier *)switchSpecifierWithTitle:(NSString *)title
+                                      key:(NSString *)key
+                                  default:(NSNumber *)defaultValue {
+    PSSpecifier *specifier =
+        [PSSpecifier preferenceSpecifierNamed:title
+                                        target:self
+                                           set:@selector(setPreferenceValue:specifier:)
+                                           get:@selector(readPreferenceValue:)
+                                        detail:nil
+                                          cell:PSSwitchCell
+                                          edit:nil];
+    [specifier setProperty:key forKey:@"key"];
+    [specifier setProperty:defaultValue forKey:@"default"];
+    return specifier;
+}
+
+- (PSSpecifier *)valueSpecifierWithTitle:(NSString *)title
+                                   value:(NSString *)value {
+    PSSpecifier *specifier =
+        [PSSpecifier preferenceSpecifierNamed:title
+                                        target:nil
+                                           set:nil
+                                           get:nil
+                                        detail:nil
+                                          cell:PSTitleValueCell
+                                          edit:nil];
+    [specifier setProperty:value forKey:@"value"];
+    return specifier;
+}
+
+- (PSSpecifier *)buttonSpecifierWithTitle:(NSString *)title action:(SEL)action {
+    PSSpecifier *specifier =
+        [PSSpecifier preferenceSpecifierNamed:title
+                                        target:self
+                                           set:nil
+                                           get:nil
+                                        detail:nil
+                                          cell:PSButtonCell
+                                          edit:nil];
+    specifier.buttonAction = action;
+    return specifier;
+}
+
+- (id)readPreferenceValue:(PSSpecifier *)specifier {
+    NSString *key = [specifier propertyForKey:@"key"];
+    id defaultValue = [specifier propertyForKey:@"default"];
+    if (![key isKindOfClass:NSString.class]) {
+        return defaultValue ?: @NO;
+    }
+
+    PPManager *manager = PPManager.sharedManager;
     if ([key isEqualToString:@"enabled"]) {
-        [PPManager.sharedManager setEnabled:toggle.isOn];
-    } else {
-        [PPManager.sharedManager setOption:key enabled:toggle.isOn];
+        return @(manager.isEnabled);
     }
+    return @([manager isOptionEnabled:key]);
 }
 
-- (void)tableView:(UITableView *)tableView
-didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
-    [tableView deselectRowAtIndexPath:indexPath animated:YES];
-    NSDictionary<NSString *, id> *row = self.sections[indexPath.section][indexPath.row];
-    [self performActionForRow:row];
-}
-
-- (void)performActionForRow:(NSDictionary<NSString *, id> *)row {
-    NSString *kind = row[@"kind"];
-    if ([kind isEqualToString:@"switch"]) {
+- (void)setPreferenceValue:(id)value specifier:(PSSpecifier *)specifier {
+    NSString *key = [specifier propertyForKey:@"key"];
+    if (![key isKindOfClass:NSString.class] ||
+        ![value respondsToSelector:@selector(boolValue)]) {
         return;
     }
 
-    if ([kind isEqualToString:@"refresh"]) {
-        [self rebuildSections];
-        [self.settingsTableView reloadData];
-        return;
-    }
-
-    if ([kind isEqualToString:@"github"]) {
-        NSURL *url = [NSURL URLWithString:@"https://github.com/Minhnhatz/performanceplus"];
-        [UIApplication.sharedApplication openURL:url
-                                         options:@{}
-                               completionHandler:^(BOOL success) {
-            if (!success) {
-                [self showMessage:@"Unable to Open GitHub"
-                          message:@"The GitHub page could not be opened."];
-            }
-        }];
-        return;
-    }
-
-    if ([kind isEqualToString:@"respring"]) {
-        UIAlertController *confirmation =
-            [UIAlertController alertControllerWithTitle:@"Respring"
-                                                message:@"Restart SpringBoard now?"
-                                         preferredStyle:UIAlertControllerStyleAlert];
-        [confirmation addAction:
-            [UIAlertAction actionWithTitle:@"Cancel"
-                                     style:UIAlertActionStyleCancel
-                                   handler:nil]];
-        [confirmation addAction:
-            [UIAlertAction actionWithTitle:@"Respring"
-                                     style:UIAlertActionStyleDestructive
-                                   handler:^(__unused UIAlertAction *action) {
-            [self respring];
-        }]];
-        [self presentViewController:confirmation animated:YES completion:nil];
-        return;
-    }
-
-    [self showDetailsForRow:row];
-}
-
-- (void)showDetailsForRow:(NSDictionary<NSString *, id> *)row {
-    NSString *kind = row[@"kind"];
     PPManager *manager = PPManager.sharedManager;
-    NSString *message = row[@"subtitle"];
-
-    if ([kind isEqualToString:@"device-cpu"]) {
-        message = [NSString stringWithFormat:@"%@\nNo hardware performance controls are changed.",
-                   manager.cpuStatus];
-    } else if ([kind isEqualToString:@"device-memory"]) {
-        message = [NSString stringWithFormat:@"%@\nMemory values are read-only estimates.",
-                   manager.memoryStatus];
-    } else if ([kind isEqualToString:@"device-battery"]) {
-        message = [NSString stringWithFormat:@"%@\nThermal state: %@\nPower mode: %@",
-                   manager.batteryStatus,
-                   manager.thermalStatus,
-                   manager.powerStatus];
-    } else if ([kind isEqualToString:@"device-ios"]) {
-        message = manager.systemVersion;
-    } else if ([kind isEqualToString:@"device-model"]) {
-        message = manager.deviceModel;
-    } else if ([kind isEqualToString:@"status-loaded"]) {
-        message = @"Unable to determine which tweaks are loaded system-wide from this preference page.";
-    } else if ([kind isEqualToString:@"status-conflicts"]) {
-        message = @"Unable to determine. No tweak is reported as conflicting without verifiable evidence.";
-    } else if ([kind isEqualToString:@"status-count"]) {
-        message = [NSString stringWithFormat:
-                   @"%@\nThis counts dynamic libraries, not package-manager records.",
-                   manager.installedTweakCountStatus];
+    BOOL enabled = [value boolValue];
+    if ([key isEqualToString:@"enabled"]) {
+        [manager setEnabled:enabled];
+    } else {
+        [manager setOption:key enabled:enabled];
     }
+}
 
-    [self showMessage:row[@"title"] message:message];
+- (void)refreshDeviceStatus {
+    self.hasLoadedDeviceStatus = YES;
+    _specifiers = nil;
+    [self reloadSpecifiers];
+}
+
+- (void)confirmRespring {
+    UIAlertController *confirmation =
+        [UIAlertController alertControllerWithTitle:@"Respring"
+                                            message:@"Restart SpringBoard now?"
+                                     preferredStyle:UIAlertControllerStyleAlert];
+    [confirmation addAction:
+        [UIAlertAction actionWithTitle:@"Cancel"
+                                 style:UIAlertActionStyleCancel
+                               handler:nil]];
+    __weak PPListController *weakSelf = self;
+    [confirmation addAction:
+        [UIAlertAction actionWithTitle:@"Respring"
+                                 style:UIAlertActionStyleDestructive
+                               handler:^(__unused UIAlertAction *action) {
+        [weakSelf respring];
+    }]];
+    [self presentViewController:confirmation animated:YES completion:nil];
 }
 
 - (void)respring {
     pid_t process = 0;
     char *arguments[] = {
         "/usr/bin/killall",
-        "-9",
+        "-TERM",
         "SpringBoard",
         NULL
     };
