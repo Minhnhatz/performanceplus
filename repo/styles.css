@@ -39,12 +39,12 @@ body {
 
 .bg-glow {
   position: fixed;
-  z-index: -1;
+  z-index: 0;
   border-radius: 50%;
   filter: blur(90px);
-  opacity: 0.6;
+  opacity: 0.75;
   pointer-events: none;
-  animation: floatGlow 18s ease-in-out infinite alternate;
+  animation: floatGlow 9s ease-in-out infinite alternate;
 }
 
 .glow-one {
@@ -94,11 +94,18 @@ button {
 }
 
 .topbar {
+  position: relative;
+  z-index: 1;
   display: flex;
   min-height: 82px;
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid var(--line);
+}
+
+main {
+  position: relative;
+  z-index: 1;
 }
 
 .brand {
@@ -320,6 +327,7 @@ h1 span {
   border: 1px solid rgba(197, 243, 107, 0.13);
   border-radius: 50%;
   box-shadow: 0 0 0 24px rgba(197, 243, 107, 0.025), 0 0 0 50px rgba(197, 243, 107, 0.02);
+  animation: ringPulse 6s ease-in-out infinite alternate;
   content: "";
   pointer-events: none;
 }
@@ -719,6 +727,8 @@ h1 span {
 }
 
 .footer {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -770,10 +780,21 @@ h1 span {
 
 @keyframes floatGlow {
   0% {
-    transform: translate3d(0, 0, 0) scale(1);
+    transform: translate3d(-18px, 10px, 0) scale(0.92);
   }
   100% {
-    transform: translate3d(18px, -30px, 0) scale(1.12);
+    transform: translate3d(38px, -36px, 0) scale(1.16);
+  }
+}
+
+@keyframes ringPulse {
+  0% {
+    opacity: 0.45;
+    transform: scale(0.92);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.08);
   }
 }
 
@@ -911,5 +932,7 @@ h1 span {
   *::after {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
   }
 }
