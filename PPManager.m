@@ -10,19 +10,93 @@ static NSString * const kPPPerformanceModeKey = @"performanceMode";
 static NSString * const kPPMemoryOptimizationKey = @"memoryOptimization";
 static NSString * const kPPAppLaunchOptimizationKey = @"appLaunchOptimization";
 
+static NSArray<NSString *> *PPDefaultFeatureKeys(void) {
+    static NSArray<NSString *> *keys;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        keys = @[
+            @"enabled",
+            @"performanceMode",
+            @"memoryOptimization",
+            @"appLaunchOptimization",
+            @"PPRefreshRate",
+            @"PPFPSLimit",
+            @"PPTouchOptimization",
+            @"PPTouchResponse",
+            @"PPGestureResponsiveness",
+            @"PPStabilityMode",
+            @"PPAntiGlitch",
+            @"PPStutterReduction",
+            @"PPSwipeProtection",
+            @"PPKeyboardOptimization",
+            @"PPControlCenterOptimization",
+            @"PPAppCompatibility",
+            @"PPRAMOptimization",
+            @"PPCPUOptimization",
+            @"PPGPUOptimization",
+            @"PPRecordingOptimization",
+            @"PPChargingOptimization",
+            @"PPBatteryOptimization",
+            @"PPGamingMode",
+            @"PPAutoProfile",
+            @"PPThermalManagement",
+            @"PPThermalProfile",
+            @"PPBackgroundActivity",
+            @"PPBackgroundMode",
+            @"PPSafeMode"
+        ];
+    });
+    return keys;
+}
+
 static NSUserDefaults *PPPreferences(void) {
     return [[NSUserDefaults alloc] initWithSuiteName:kPPDomain];
+}
+
+static NSDictionary<NSString *, id> *PPDefaultPreferences(void) {
+    static NSDictionary *defaults;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        defaults = @{
+            kPPEnabledKey: @YES,
+            kPPPerformanceModeKey: @NO,
+            kPPMemoryOptimizationKey: @NO,
+            kPPAppLaunchOptimizationKey: @NO,
+            @"PPRefreshRate": @"Auto",
+            @"PPFPSLimit": @"Auto",
+            @"PPTouchOptimization": @YES,
+            @"PPTouchResponse": @YES,
+            @"PPGestureResponsiveness": @YES,
+            @"PPStabilityMode": @YES,
+            @"PPAntiGlitch": @YES,
+            @"PPStutterReduction": @YES,
+            @"PPSwipeProtection": @YES,
+            @"PPKeyboardOptimization": @YES,
+            @"PPControlCenterOptimization": @YES,
+            @"PPAppCompatibility": @YES,
+            @"PPRAMOptimization": @NO,
+            @"PPCPUOptimization": @NO,
+            @"PPGPUOptimization": @NO,
+            @"PPRecordingOptimization": @YES,
+            @"PPChargingOptimization": @YES,
+            @"PPBatteryOptimization": @YES,
+            @"PPGamingMode": @NO,
+            @"PPAutoProfile": @"Auto",
+            @"PPThermalManagement": @YES,
+            @"PPThermalProfile": @"Auto",
+            @"PPBackgroundActivity": @YES,
+            @"PPBackgroundMode": @"Auto",
+            @"PPSafeMode": @NO
+        };
+    });
+    return defaults;
 }
 
 static NSSet<NSString *> *PPOptionKeys(void) {
     static NSSet<NSString *> *keys;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        keys = [NSSet setWithObjects:
-            kPPPerformanceModeKey,
-            kPPMemoryOptimizationKey,
-            kPPAppLaunchOptimizationKey,
-            nil];
+        keys = [NSSet setWithArray:PPDefaultFeatureKeys()];
     });
     return keys;
 }
@@ -36,6 +110,22 @@ static NSSet<NSString *> *PPOptionKeys(void) {
         manager = [[self alloc] init];
     });
     return manager;
+}
+
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        [self registerDefaultPreferences];
+    }
+    return self;
+}
+
+- (void)registerDefaultPreferences {
+    NSUserDefaults *defaults = PPPreferences();
+    if (!defaults) {
+        return;
+    }
+    [defaults registerDefaults:PPDefaultPreferences()];
 }
 
 - (BOOL)isEnabled {
@@ -55,25 +145,110 @@ static NSSet<NSString *> *PPOptionKeys(void) {
     [defaults setBool:enabled forKey:kPPEnabledKey];
 }
 
-- (BOOL)isOptionEnabled:(NSString *)option {
-    if (![option isKindOfClass:NSString.class] ||
-        ![PPOptionKeys() containsObject:option]) {
-        return NO;
+- (BOOL)boolForKey:(NSString *)key defaultValue:(BOOL)defaultValue {
+    if (![key isKindOfClass:NSString.class] || ![PPOptionKeys() containsObject:key]) {
+        return defaultValue;
     }
     NSUserDefaults *defaults = PPPreferences();
-    return defaults ? [defaults boolForKey:option] : NO;
+    if (!defaults) {
+        return defaultValue;
+    }
+    NSNumber *value = [defaults objectForKey:key];
+    return [value isKindOfClass:NSNumber.class] ? value.boolValue : defaultValue;
 }
 
-- (void)setOption:(NSString *)option enabled:(BOOL)enabled {
-    if (![option isKindOfClass:NSString.class] ||
-        ![PPOptionKeys() containsObject:option]) {
+- (void)setBool:(BOOL)enabled forKey:(NSString *)key {
+    if (![key isKindOfClass:NSString.class] || ![PPOptionKeys() containsObject:key]) {
         return;
     }
     NSUserDefaults *defaults = PPPreferences();
     if (!defaults) {
         return;
     }
-    [defaults setBool:enabled forKey:option];
+    [defaults setBool:enabled forKey:key];
+}
+
+- (NSString *)stringForKey:(NSString *)key defaultValue:(NSString *)defaultValue {
+    if (![key isKindOfClass:NSString.class] || ![PPOptionKeys() containsObject:key]) {
+        return defaultValue ?: @"Auto";
+    }
+    NSUserDefaults *defaults = PPPreferences();
+    if (!defaults) {
+        return defaultValue ?: @"Auto";
+    }
+    NSString *value = [defaults stringForKey:key];
+    return [value isKindOfClass:NSString.class] && value.length > 0 ? value : (defaultValue ?: @"Auto");
+}
+
+- (void)setString:(NSString *)value forKey:(NSString *)key {
+    if (![key isKindOfClass:NSString.class] || ![PPOptionKeys() containsObject:key]) {
+        return;
+    }
+    NSUserDefaults *defaults = PPPreferences();
+    if (!defaults) {
+        return;
+    }
+    if ([value isKindOfClass:NSString.class]) {
+        [defaults setObject:value forKey:key];
+    }
+}
+
+- (BOOL)isOptionEnabled:(NSString *)option {
+    if (![option isKindOfClass:NSString.class] || ![PPOptionKeys() containsObject:option]) {
+        return NO;
+    }
+    return [self boolForKey:option defaultValue:NO];
+}
+
+- (void)setOption:(NSString *)option enabled:(BOOL)enabled {
+    if (![option isKindOfClass:NSString.class] || ![PPOptionKeys() containsObject:option]) {
+        return;
+    }
+    [self setBool:enabled forKey:option];
+}
+
+- (NSArray<NSString *> *)refreshRateOptions {
+    NSInteger maxFps = (NSInteger)UIScreen.mainScreen.maximumFramesPerSecond;
+    if (maxFps <= 0) {
+        return @[@"Auto", @"60 Hz"];
+    }
+
+    NSMutableArray<NSString *> *rates = [NSMutableArray arrayWithObject:@"Auto"];
+    if (maxFps >= 120) {
+        [rates addObjectsFromArray:@[@"60 Hz", @"90 Hz", @"120 Hz"]];
+    } else if (maxFps >= 90) {
+        [rates addObjectsFromArray:@[@"60 Hz", @"90 Hz"]];
+    } else {
+        [rates addObject:@"60 Hz"];
+    }
+    return rates;
+}
+
+- (NSArray<NSString *> *)fpsOptions {
+    NSInteger maxFps = (NSInteger)UIScreen.mainScreen.maximumFramesPerSecond;
+    NSMutableArray<NSString *> *fps = [NSMutableArray arrayWithObject:@"Auto"];
+    if (maxFps >= 120) {
+        [fps addObjectsFromArray:@[@"30 FPS", @"60 FPS", @"90 FPS", @"120 FPS"]];
+    } else if (maxFps >= 90) {
+        [fps addObjectsFromArray:@[@"30 FPS", @"60 FPS", @"90 FPS"]];
+    } else if (maxFps >= 60) {
+        [fps addObjectsFromArray:@[@"30 FPS", @"60 FPS"]];
+    } else {
+        [fps addObject:@"30 FPS"];
+    }
+    return fps;
+}
+
+- (NSString *)unsupportedMessage {
+    return @"Not supported on this device/iOS version.";
+}
+
+- (NSString *)experimentalMessage {
+    return @"Experimental feature. Results may vary.";
+}
+
+- (NSString *)limitedByIOSMessage {
+    return @"Limited by iOS.";
 }
 
 - (NSString *)deviceModel {
@@ -128,16 +303,12 @@ static NSSet<NSString *> *PPOptionKeys(void) {
 
     unsigned long long freeMemory =
         (unsigned long long)vmStats.free_count * pageSize;
-
     unsigned long long active =
         (unsigned long long)vmStats.active_count * pageSize;
-
     unsigned long long inactive =
         (unsigned long long)vmStats.inactive_count * pageSize;
-
     unsigned long long wired =
         (unsigned long long)vmStats.wire_count * pageSize;
-
     unsigned long long used = active + inactive + wired;
 
     double usedMB = (double)used / 1024.0 / 1024.0;
@@ -180,11 +351,10 @@ static NSSet<NSString *> *PPOptionKeys(void) {
 
 - (NSString *)thermalStatus {
     if (@available(iOS 11.0, *)) {
-        NSProcessInfoThermalState state =
-            NSProcessInfo.processInfo.thermalState;
+        NSProcessInfoThermalState state = NSProcessInfo.processInfo.thermalState;
         switch (state) {
             case NSProcessInfoThermalStateNominal:
-                return @"Nominal";
+                return @"Normal";
             case NSProcessInfoThermalStateFair:
                 return @"Fair";
             case NSProcessInfoThermalStateSerious:
@@ -193,7 +363,7 @@ static NSSet<NSString *> *PPOptionKeys(void) {
                 return @"Critical";
         }
     }
-    return @"Unavailable";
+    return @"Thermal monitoring unavailable.";
 }
 
 - (NSString *)powerStatus {
@@ -203,8 +373,7 @@ static NSSet<NSString *> *PPOptionKeys(void) {
 }
 
 - (NSString *)uptimeStatus {
-    NSTimeInterval seconds =
-        NSProcessInfo.processInfo.systemUptime;
+    NSTimeInterval seconds = NSProcessInfo.processInfo.systemUptime;
     if (!isfinite(seconds) || seconds < 0.0) {
         return @"Unavailable";
     }
@@ -221,60 +390,6 @@ static NSSet<NSString *> *PPOptionKeys(void) {
 
     return [NSString stringWithFormat:@"%ldh %ldm",
             (long)hours, (long)minutes];
-}
-
-- (NSString *)loadedTweakStatus {
-    return @"Unable to determine reliably";
-}
-
-- (NSString *)possibleConflictStatus {
-    return @"Unable to determine";
-}
-
-- (NSString *)installedTweakCountStatus {
-    NSString *directory =
-        @"/var/jb/Library/MobileSubstrate/DynamicLibraries";
-    NSError *error = nil;
-    NSArray<NSString *> *contents =
-        [[NSFileManager defaultManager] contentsOfDirectoryAtPath:directory
-                                                            error:&error];
-
-    if (!contents) {
-        return @"Unable to determine";
-    }
-
-    NSUInteger libraryCount = 0;
-    for (NSString *name in contents) {
-        if ([name.pathExtension isEqualToString:@"dylib"]) {
-            libraryCount++;
-        }
-    }
-
-    return [NSString stringWithFormat:@"%lu tweak libraries found",
-            (unsigned long)libraryCount];
-}
-
-- (NSString *)diagnosticsSummary {
-    NSInteger cpuCount =
-        [NSProcessInfo processInfo].processorCount;
-
-    return [NSString stringWithFormat:
-            @"Device: %@\n"
-             "iOS: %@\n"
-             "CPU cores: %ld\n"
-             "Memory: %@\n"
-             "Thermal: %@\n"
-             "Power: %@\n"
-             "Uptime: %@\n"
-             "Performance Mode: %@",
-            [self deviceModel],
-            [self systemVersion],
-            (long)cpuCount,
-            [self memoryStatus],
-            [self thermalStatus],
-            [self powerStatus],
-            [self uptimeStatus],
-            [self isEnabled] ? @"ON" : @"OFF"];
 }
 
 @end

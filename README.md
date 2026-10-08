@@ -1,8 +1,8 @@
 # PerformancePlus
 
 PerformancePlus is a rootless jailbreak tweak with a Settings page for device
-information and a small set of user-preference switches. It is distributed
-through this Sileo/Zebra source:
+information and stored preferences.
+It is distributed through this Sileo/Zebra source:
 
 **https://minhnhatz.github.io/performanceplus/**
 
@@ -33,18 +33,34 @@ through this Sileo/Zebra source:
 
 After installation, open **Settings → PerformancePlus**.
 
-- **Performance** contains the master switch and the Performance Mode, Memory
-  Optimization, and App Launch Optimization switches. These switches save
-  preferences only; they do not change CPU scheduling, purge memory, or alter
-  app-launch behavior.
-- **Device Status** shows information such as CPU cores, memory, battery,
-  iOS version, and device model.
-- Other sections show tweak status and provide available actions, including
-  refreshing displayed information and respringing SpringBoard.
+- **Device Status** displays information such as CPU cores, memory, battery,
+  thermal state, power mode, uptime, iOS version, and device model.
+- **Recovery** provides a safe-mode preference, reset actions, and a
+  user-confirmed respring action.
+- **Settings Storage** reports where PerformancePlus preferences are stored.
+- Performance controls that cannot be safely applied through supported
+  user-space APIs are identified as unsupported; their preference switches are
+  not presented as working optimizations.
 
 PerformancePlus does not overclock the CPU or GPU, change voltage, bypass
 thermal protections, manipulate charging, or modify kernel memory. iOS remains
-in control of scheduling and thermal behavior.
+in control of scheduling and thermal behavior. Unsupported controls display
+**Not supported on this device/iOS version.** Experimental RAM, CPU, and GPU
+optimization preferences default to off.
+
+## Build from source
+
+Install Theos with its iOS SDK and Linux toolchain, then set `THEOS` to the
+Theos installation directory. From the repository root, run:
+
+```sh
+make clean
+make package FINALPACKAGE=1
+```
+
+The project targets rootless iOS 15 or later and packages arm64 and arm64e
+architectures. The `Build and deploy APT repository` GitHub Actions workflow
+performs the same clean build before validating and publishing the package.
 
 ## Update or remove
 

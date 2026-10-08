@@ -4,11 +4,23 @@
 
 + (instancetype)sharedManager;
 
+- (void)registerDefaultPreferences;
+
 - (BOOL)isEnabled;
 - (void)setEnabled:(BOOL)enabled;
 - (BOOL)isOptionEnabled:(NSString *)option;
 - (void)setOption:(NSString *)option enabled:(BOOL)enabled;
 
+- (BOOL)boolForKey:(NSString *)key defaultValue:(BOOL)defaultValue;
+- (void)setBool:(BOOL)enabled forKey:(NSString *)key;
+- (NSString *)stringForKey:(NSString *)key defaultValue:(NSString *)defaultValue;
+- (void)setString:(NSString *)value forKey:(NSString *)key;
+
+- (NSArray<NSString *> *)refreshRateOptions;
+- (NSArray<NSString *> *)fpsOptions;
+- (NSString *)unsupportedMessage;
+- (NSString *)experimentalMessage;
+- (NSString *)limitedByIOSMessage;
 - (NSString *)deviceModel;
 - (NSString *)systemVersion;
 - (NSString *)cpuStatus;
@@ -17,9 +29,5 @@
 - (NSString *)thermalStatus;
 - (NSString *)powerStatus;
 - (NSString *)uptimeStatus;
-- (NSString *)loadedTweakStatus;
-- (NSString *)possibleConflictStatus;
-- (NSString *)installedTweakCountStatus;
-- (NSString *)diagnosticsSummary;
 
 @end

@@ -1,6 +1,6 @@
 Package: com.blue.performanceplus
 Name: PerformancePlus
-Version: 1.0.1
+Version: 1.0.2
 Architecture: iphoneos-arm64
 Description: Performance and system status tweak
 Maintainer: Blue
