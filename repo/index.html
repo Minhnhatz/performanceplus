@@ -10,6 +10,10 @@
   <script src="app.js" defer></script>
 </head>
 <body>
+  <div class="bg-glow glow-one" aria-hidden="true"></div>
+  <div class="bg-glow glow-two" aria-hidden="true"></div>
+  <div class="bg-glow glow-three" aria-hidden="true"></div>
+
   <header class="shell topbar">
     <a class="brand" href="./" aria-label="PerformancePlus home">
       <span class="brand-mark" aria-hidden="true">PP</span>
@@ -26,7 +30,7 @@
   </header>
 
   <main>
-    <section class="shell hero">
+    <section class="shell hero reveal" data-reveal>
       <div>
         <p class="eyebrow">Rootless utility · iOS 15+</p>
         <h1>Know your device.<br><span>Keep control.</span></h1>
@@ -44,7 +48,7 @@
         </p>
       </div>
 
-      <aside class="device-card" aria-label="Examples of device information shown in PerformancePlus">
+      <aside class="device-card reveal reveal-delay" data-reveal aria-label="Examples of device information shown in PerformancePlus">
         <div class="device-card-head">
           <div>
             <p class="device-card-label">Inside Settings</p>
@@ -74,7 +78,7 @@
       </aside>
     </section>
 
-    <section class="shell section" id="package">
+    <section class="shell section reveal" id="package" data-reveal>
       <div class="section-heading">
         <div>
           <p class="eyebrow">Available now</p>
@@ -83,7 +87,7 @@
         <p>Install with Sileo or Zebra. Add the source once, then find PerformancePlus in the package list.</p>
       </div>
 
-      <article class="package-card">
+      <article class="package-card reveal reveal-delay" data-reveal>
         <div class="package-main">
           <span class="package-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 4.5 7.2v9.6L12 21l7.5-4.2V7.2L12 3Z"/><path d="m4.8 7.4 7.2 4 7.2-4M12 11.5V21"/></svg></span>
           <div>
@@ -103,17 +107,17 @@
       </article>
 
       <div class="feature-grid">
-        <article class="feature-card">
+        <article class="feature-card reveal" data-reveal>
           <span class="feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 2v2m6-2v2M9 20v2m6-2v2M2 9h2m16 0h2M2 15h2m16 0h2"/></svg></span>
           <h3>Useful device information</h3>
           <p>See device model, iOS version, CPU cores, memory, battery, and system status in one place.</p>
         </article>
-        <article class="feature-card">
+        <article class="feature-card reveal reveal-delay" data-reveal>
           <span class="feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v3m0 12v3m9-9h-3M6 12H3"/><circle cx="12" cy="12" r="4"/></svg></span>
           <h3>Preferences, not promises</h3>
           <p>The optional switches store your choices. They do not change system scheduling or claim to optimize performance.</p>
         </article>
-        <article class="feature-card">
+        <article class="feature-card reveal reveal-delay-2" data-reveal>
           <span class="feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m5 12 4 4L19 6"/><path d="M12 22a10 10 0 1 0-10-10"/></svg></span>
           <h3>iOS stays in charge</h3>
           <p>No overclocking, voltage changes, thermal bypasses, charging manipulation, or kernel-memory changes.</p>
@@ -121,7 +125,7 @@
       </div>
     </section>
 
-    <section class="shell section" id="install">
+    <section class="shell section reveal" id="install" data-reveal>
       <div class="install-layout">
         <div class="install-intro">
           <p class="eyebrow">Get started</p>
@@ -133,7 +137,7 @@
             <span>iphoneos-arm64</span>
           </div>
         </div>
-        <div>
+        <div class="reveal reveal-delay" data-reveal>
           <ol class="install-steps">
             <li>Open Sileo or Zebra and go to Sources.</li>
             <li>Tap + to add a repository.</li>

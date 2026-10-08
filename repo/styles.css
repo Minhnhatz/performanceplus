@@ -1,8 +1,8 @@
 :root {
   color-scheme: dark;
   --page: #10120f;
-  --surface: #191c18;
-  --surface-raised: #20241e;
+  --surface: rgba(25, 28, 24, 0.88);
+  --surface-raised: rgba(32, 36, 30, 0.9);
   --text: #f2f3ec;
   --muted: #a2a89a;
   --line: rgba(231, 238, 218, 0.12);
@@ -26,13 +26,51 @@ html {
 }
 
 body {
+  position: relative;
   min-height: 100vh;
   margin: 0;
   color: var(--text);
   background:
-    radial-gradient(ellipse at 78% 2%, rgba(169, 201, 112, 0.1), transparent 32rem),
-    radial-gradient(ellipse at 4% 34%, rgba(103, 129, 203, 0.09), transparent 32rem),
-    var(--page);
+    radial-gradient(ellipse at 78% 2%, rgba(169, 201, 112, 0.12), transparent 32rem),
+    radial-gradient(ellipse at 4% 34%, rgba(103, 129, 203, 0.1), transparent 32rem),
+    linear-gradient(180deg, #0d110f 0%, #111612 100%);
+  overflow-x: hidden;
+}
+
+.bg-glow {
+  position: fixed;
+  z-index: -1;
+  border-radius: 50%;
+  filter: blur(90px);
+  opacity: 0.6;
+  pointer-events: none;
+  animation: floatGlow 18s ease-in-out infinite alternate;
+}
+
+.glow-one {
+  top: 8%;
+  left: 6%;
+  width: 22rem;
+  height: 22rem;
+  background: rgba(197, 243, 107, 0.18);
+}
+
+.glow-two {
+  right: 8%;
+  top: 16%;
+  width: 20rem;
+  height: 20rem;
+  background: rgba(110, 142, 255, 0.16);
+  animation-delay: 1.2s;
+}
+
+.glow-three {
+  left: 42%;
+  bottom: 8%;
+  width: 18rem;
+  height: 18rem;
+  background: rgba(172, 255, 204, 0.12);
+  animation-delay: 2.2s;
 }
 
 a {
@@ -202,11 +240,13 @@ h1 span {
   cursor: pointer;
   font-size: 12px;
   font-weight: 750;
-  transition: transform 150ms ease, background 150ms ease, border-color 150ms ease;
+  transition: transform 180ms ease, background 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
 }
 
 .button:hover {
-  transform: translateY(-2px);
+  transform: translateY(-2px) scale(1.01);
+  box-shadow: 0 16px 28px rgba(197, 243, 107, 0.12);
 }
 
 .button-primary {
@@ -260,6 +300,15 @@ h1 span {
   border: 1px solid var(--line);
   border-radius: 24px;
   box-shadow: 0 28px 90px rgba(0, 0, 0, 0.28);
+  transition: transform 250ms ease, box-shadow 250ms ease, border-color 250ms ease;
+}
+
+.device-card:hover,
+.package-card:hover,
+.feature-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(197, 243, 107, 0.25);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.22);
 }
 
 .device-card::after {
@@ -426,9 +475,25 @@ h1 span {
   align-items: center;
   gap: 22px;
   padding: 22px;
-  background: var(--surface);
+  background: linear-gradient(180deg, rgba(25, 28, 24, 0.96), rgba(19, 21, 18, 0.94));
   border: 1px solid var(--line);
   border-radius: 17px;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.12);
+  transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.package-card::before,
+.feature-card::before,
+.device-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.07), transparent 70%);
+  transform: translateX(-120%);
+  animation: shimmer 9s ease-in-out infinite;
+  pointer-events: none;
 }
 
 .package-main {
@@ -498,11 +563,14 @@ h1 span {
 }
 
 .feature-card {
+  position: relative;
+  overflow: hidden;
   min-height: 178px;
   padding: 20px;
   background: rgba(25, 28, 24, 0.72);
   border: 1px solid var(--line);
   border-radius: 15px;
+  transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease;
 }
 
 .feature-icon {
@@ -619,12 +687,18 @@ h1 span {
   min-height: 36px;
   padding: 0 12px;
   color: var(--accent-ink);
-  background: var(--accent);
+  background: linear-gradient(180deg, #d6ff8f, var(--accent));
   border: 0;
   border-radius: 8px;
   cursor: pointer;
   font-size: 10px;
   font-weight: 800;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.source-copy button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(197, 243, 107, 0.18);
 }
 
 .compatibility {
@@ -673,6 +747,48 @@ h1 span {
   height: 1px;
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 700ms ease, transform 700ms ease;
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.reveal-delay {
+  transition-delay: 120ms;
+}
+
+.reveal-delay-2 {
+  transition-delay: 220ms;
+}
+
+@keyframes floatGlow {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  100% {
+    transform: translate3d(18px, -30px, 0) scale(1.12);
+  }
+}
+
+@keyframes shimmer {
+  0%, 100% {
+    transform: translateX(-120%);
+    opacity: 0;
+  }
+  20%, 80% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(120%);
+    opacity: 0;
+  }
 }
 
 @media (max-width: 800px) {
