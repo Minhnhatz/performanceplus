@@ -125,9 +125,19 @@ main {
   color: var(--accent-ink);
   background: var(--accent);
   border-radius: 12px;
-  font-size: 13px;
-  font-weight: 900;
-  letter-spacing: -0.09em;
+  box-shadow: 0 8px 24px rgba(197, 243, 107, 0.16);
+}
+
+.lucide-icon {
+  flex: 0 0 auto;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.brand-mark svg {
+  width: 21px;
+  height: 21px;
 }
 
 .brand-caption {
@@ -409,7 +419,14 @@ h1 span {
   place-items: center;
   color: var(--blue);
   background: rgba(168, 186, 255, 0.1);
+  border: 1px solid rgba(168, 186, 255, 0.12);
   border-radius: 10px;
+  transition: transform 180ms ease, background 180ms ease;
+}
+
+.device-list li:hover .device-icon {
+  transform: translateY(-2px);
+  background: rgba(168, 186, 255, 0.16);
 }
 
 .device-icon svg {
@@ -520,6 +537,7 @@ h1 span {
   color: var(--accent-ink);
   background: var(--accent);
   border-radius: 14px;
+  box-shadow: 0 8px 22px rgba(197, 243, 107, 0.14);
 }
 
 .package-icon svg {
@@ -589,7 +607,14 @@ h1 span {
   place-items: center;
   color: var(--accent);
   background: rgba(197, 243, 107, 0.09);
+  border: 1px solid rgba(197, 243, 107, 0.1);
   border-radius: 10px;
+  transition: transform 180ms ease, background 180ms ease;
+}
+
+.feature-card:hover .feature-icon {
+  transform: translateY(-2px);
+  background: rgba(197, 243, 107, 0.15);
 }
 
 .feature-icon svg {
