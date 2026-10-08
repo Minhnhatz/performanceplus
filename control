@@ -1,9 +1,9 @@
 Package: com.blue.performanceplus
 Name: PerformancePlus
-Version: 1.0.6
+Version: 1.0.8
 Architecture: iphoneos-arm64
-Description: Performance and system status tweak
+Description: Low-overhead device status and recovery preferences
 Maintainer: Blue
 Author: Blue
 Section: Tweaks
-Depends: firmware (>= 15.0), mobilesubstrate, preferenceloader
+Depends: firmware (>= 15.0), preferenceloader

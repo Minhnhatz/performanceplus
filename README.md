@@ -1,9 +1,10 @@
 # PerformancePlus
 
-PerformancePlus adds an API-backed device status page to **Settings** on
-supported rootless-jailbroken iPhones. It shows your device model, iOS version,
-CPU and memory readings, battery and power state, thermal state, display
-capabilities, and uptime.
+PerformancePlus adds a low-overhead, API-backed device status page to
+**Settings** on supported rootless-jailbroken iPhones. It shows your device
+model, iOS version, CPU and memory readings, battery and power state, thermal
+state, display capabilities, and uptime. It does not inject a runtime into
+SpringBoard or other apps.
 
 > PerformancePlus does not overclock your device or bypass iOS safety
 > protections. Controls that are not supported by safe iOS APIs are clearly
@@ -39,7 +40,7 @@ capabilities, and uptime.
   Low Power Mode, display capture/mirroring status, and uptime. Battery status
   monitoring is enabled for the Settings app when you view this information.
 - **Recovery options:** safe mode, reset actions, and a respring action that
-  requires your confirmation.
+  requires your confirmation. They appear in a single Recovery section.
 - **Automatic status updates:** update the displayed battery, thermal,
   power-mode, and display-capture status when iOS reports a change. You can
   turn live updates off and refresh status manually.
@@ -55,8 +56,10 @@ options default to off.
 
 PerformancePlus does not modify kernel memory, change CPU/GPU voltage or
 clock speeds, disable thermal protection, manipulate charging, or terminate
-critical system processes. iOS continues to manage performance, power, and
-thermals.
+critical system processes. It also avoids loading a no-op SpringBoard tweak.
+This reduces unnecessary injection and potential conflicts; it cannot guarantee
+that other installed tweaks will never conflict. iOS continues to manage
+performance, power, and thermals.
 
 ## Update or uninstall
 
@@ -185,11 +188,11 @@ instead of substituting a fabricated value.
 | `-addDeviceStatusSpecifiersToArray:manager:` | Adds live device-information rows to the normal or Safe Mode page. |
 | `-addRecoverySpecifiersToArray:` | Adds Safe Mode, reset, and restore controls. |
 
-### `Tweak.x`
+### Runtime scope
 
 | Function | What it does |
 | --- | --- |
-| `PPApplySafeProfileState` | Reads the enable, safe-mode, gaming-mode, and thermal-profile preferences at startup. It does not change CPU/GPU speeds, thermals, or other system performance settings. |
+| Runtime injection | Not used. PerformancePlus loads its Preference Bundle through PreferenceLoader and does not inject into SpringBoard or other apps. |
 
 ## Links
 

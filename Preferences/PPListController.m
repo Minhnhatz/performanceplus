@@ -132,7 +132,6 @@ extern char **environ;
     [specifiers addObject:[self valueSpecifierWithTitle:@"Charging Optimization" value:[NSString stringWithFormat:@"%@ Status only; charging controls are not exposed.", manager.batteryStatus]]];
     [specifiers addObject:[self valueSpecifierWithTitle:@"Battery Optimization" value:[NSString stringWithFormat:@"%@; %@ (read-only).", manager.batteryStatus, manager.powerStatus]]];
 
-    [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"RECOVERY"]];
     [self addRecoverySpecifiersToArray:specifiers];
 
     [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"SETTINGS STORAGE"]];
@@ -141,8 +140,8 @@ extern char **environ;
     [self addDeviceStatusSpecifiersToArray:specifiers manager:manager];
 
     [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"ABOUT"]];
-    [specifiers addObject:[self valueSpecifierWithTitle:@"PerformancePlus" value:@"Safe performance management"]];
-    [specifiers addObject:[self valueSpecifierWithTitle:@"Version" value:@"1.0.6"]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"PerformancePlus" value:@"Low-overhead device status"]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Version" value:@"1.0.8"]];
     [specifiers addObject:[self valueSpecifierWithTitle:@"Device" value:manager.deviceModel]];
     [specifiers addObject:[self valueSpecifierWithTitle:@"iOS" value:manager.systemVersion]];
     [specifiers addObject:[self valueSpecifierWithTitle:@"Jailbreak" value:@"Dopamine rootless" ]];
