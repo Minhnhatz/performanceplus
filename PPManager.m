@@ -257,7 +257,7 @@ static NSSet<NSString *> *PPOptionKeys(void) {
 }
 
 - (NSString *)unsupportedMessage {
-    return @"Not supported on this device/iOS version.";
+    return @"Not Supported";
 }
 
 - (NSString *)experimentalMessage {

@@ -1,7 +1,9 @@
 #import "PPListController.h"
+#import "PPIconManager.h"
 #import <Preferences/PSSpecifier.h>
 #import <Preferences/PSTableCell.h>
 #import "../PPManager.h"
+#import <math.h>
 #import <errno.h>
 #import <spawn.h>
 #import <sys/wait.h>
@@ -20,16 +22,15 @@ extern char **environ;
     [super viewDidLoad];
 
     self.title = @"PerformancePlus";
-    UIImage *icon = [UIImage imageWithContentsOfFile:
-                     @"/var/jb/Library/PreferenceLoader/Preferences/PerformancePlus.png"];
-    if (!icon) {
-        icon = [UIImage systemImageNamed:@"waveform.path"];
-    }
+    UIImage *icon = [PPIconManager imageForTitle:self.title];
 
-    UIImageView *iconView = [[UIImageView alloc] initWithImage:[icon imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate]];
+    UIImageView *iconView = [[UIImageView alloc] initWithImage:icon];
     iconView.translatesAutoresizingMaskIntoConstraints = NO;
     iconView.contentMode = UIViewContentModeScaleAspectFit;
-    iconView.tintColor = UIColor.labelColor;
+    iconView.tintColor = [PPIconManager accentColorForIconName:[PPIconManager iconNameForTitle:self.title]];
+    iconView.backgroundColor = [[PPIconManager accentColorForIconName:[PPIconManager iconNameForTitle:self.title]] colorWithAlphaComponent:0.15];
+    iconView.layer.cornerRadius = 8.0;
+    iconView.layer.masksToBounds = YES;
     [NSLayoutConstraint activateConstraints:@[
         [iconView.widthAnchor constraintEqualToConstant:16],
         [iconView.heightAnchor constraintEqualToConstant:16]
@@ -47,6 +48,178 @@ extern char **environ;
     titleView.isAccessibilityElement = YES;
     titleView.accessibilityLabel = self.title;
     self.navigationItem.titleView = titleView;
+
+    UITableView *tableView = self.table;
+    if (tableView) {
+        tableView.backgroundColor = UIColor.systemGroupedBackgroundColor;
+        tableView.separatorStyle = UITableViewCellSeparatorStyleSingleLine;
+        tableView.separatorColor = UIColor.separatorColor;
+        tableView.rowHeight = 64.0;
+        tableView.estimatedRowHeight = 64.0;
+        tableView.sectionHeaderHeight = 38.0;
+        tableView.estimatedSectionHeaderHeight = 38.0;
+        tableView.sectionFooterHeight = 8.0;
+        tableView.estimatedSectionFooterHeight = 8.0;
+        tableView.contentInset = UIEdgeInsetsMake(4.0, 0.0, 12.0, 0.0);
+    }
+}
+
+- (void)viewDidLayoutSubviews {
+    [super viewDidLayoutSubviews];
+    [self styleVisibleCells];
+}
+
+- (void)traitCollectionDidChange:(UITraitCollection *)previousTraitCollection {
+    [super traitCollectionDidChange:previousTraitCollection];
+    if (@available(iOS 13.0, *)) {
+        if (previousTraitCollection &&
+            [self.traitCollection hasDifferentColorAppearanceComparedToTraitCollection:previousTraitCollection]) {
+            [self styleVisibleCells];
+        }
+    }
+}
+
+- (void)styleVisibleCells {
+    UITableView *tableView = self.table;
+    if (!tableView) {
+        return;
+    }
+
+    for (UITableViewCell *cell in tableView.visibleCells) {
+        NSString *title = cell.textLabel.text ?: @"";
+        [self styleCell:cell withTitle:title];
+    }
+
+    for (NSInteger section = 0; section < tableView.numberOfSections; section++) {
+        UITableViewHeaderFooterView *header = [tableView headerViewForSection:section];
+        header.textLabel.font = [UIFont systemFontOfSize:14.0 weight:UIFontWeightSemibold];
+        header.textLabel.textColor = UIColor.secondaryLabelColor;
+        header.textLabel.text = [header.textLabel.text localizedCapitalizedString];
+    }
+}
+
+- (void)styleCell:(UITableViewCell *)cell withTitle:(NSString *)title {
+    if (!cell || !cell.textLabel) {
+        return;
+    }
+
+    UIView *card = cell.backgroundView;
+    if (!card || card.tag != 7104) {
+        card = [[UIView alloc] initWithFrame:cell.bounds];
+        card.tag = 7104;
+        cell.backgroundView = card;
+    }
+    card.backgroundColor = UIColor.secondarySystemGroupedBackgroundColor;
+    card.layer.borderWidth = 0.0;
+    NSIndexPath *indexPath = [self.table indexPathForCell:cell];
+    NSInteger rowCount = indexPath ? [self.table numberOfRowsInSection:indexPath.section] : 1;
+    BOOL firstRow = !indexPath || indexPath.row == 0;
+    BOOL lastRow = !indexPath || indexPath.row == rowCount - 1;
+    card.layer.cornerRadius = (firstRow || lastRow) ? 14.0 : 0.0;
+    CACornerMask roundedCorners = 0;
+    if (firstRow) {
+        roundedCorners |= kCALayerMinXMinYCorner | kCALayerMaxXMinYCorner;
+    }
+    if (lastRow) {
+        roundedCorners |= kCALayerMinXMaxYCorner | kCALayerMaxXMaxYCorner;
+    }
+    card.layer.maskedCorners = roundedCorners;
+    card.frame = CGRectInset(cell.bounds, 14.0, 0.0);
+    card.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+
+    cell.backgroundColor = UIColor.clearColor;
+    cell.contentView.backgroundColor = UIColor.clearColor;
+    cell.selectionStyle = UITableViewCellSelectionStyleNone;
+    cell.textLabel.textColor = UIColor.labelColor;
+    cell.textLabel.font = [UIFont systemFontOfSize:16.0 weight:UIFontWeightSemibold];
+    cell.textLabel.numberOfLines = 1;
+    cell.textLabel.adjustsFontSizeToFitWidth = YES;
+    cell.textLabel.minimumScaleFactor = 0.9;
+
+    if (cell.detailTextLabel) {
+        cell.detailTextLabel.textColor = UIColor.secondaryLabelColor;
+        cell.detailTextLabel.font = [UIFont systemFontOfSize:12.0 weight:UIFontWeightMedium];
+        cell.detailTextLabel.numberOfLines = 1;
+        cell.detailTextLabel.lineBreakMode = NSLineBreakByTruncatingTail;
+    }
+
+    UIImage *icon = [PPIconManager imageForTitle:title];
+    UIView *iconBadgeView = [cell.contentView viewWithTag:7106];
+    UIImageView *iconBadge = [iconBadgeView isKindOfClass:UIImageView.class] ? (UIImageView *)iconBadgeView : nil;
+    if (icon) {
+        if (!iconBadge) {
+            iconBadge = [[UIImageView alloc] initWithFrame:CGRectZero];
+            iconBadge.tag = 7106;
+            iconBadge.contentMode = UIViewContentModeCenter;
+            iconBadge.layer.cornerRadius = 12.0;
+            iconBadge.layer.masksToBounds = YES;
+            [cell.contentView addSubview:iconBadge];
+        }
+        iconBadge.hidden = NO;
+        iconBadge.image = icon;
+        UIColor *accent = [PPIconManager accentColorForIconName:[PPIconManager iconNameForTitle:title]];
+        iconBadge.backgroundColor = [accent colorWithAlphaComponent:0.15];
+        iconBadge.tintColor = accent;
+        iconBadge.frame = CGRectMake(14.0,
+                                     floor((CGRectGetHeight(cell.contentView.bounds) - 42.0) / 2.0),
+                                     42.0,
+                                     42.0);
+        cell.separatorInset = UIEdgeInsetsMake(0.0, CGRectGetMaxX(iconBadge.frame) + 12.0, 0.0, 14.0);
+    } else {
+        iconBadge.hidden = YES;
+        cell.separatorInset = UIEdgeInsetsMake(0.0, 20.0, 0.0, 14.0);
+    }
+    if (lastRow) {
+        cell.separatorInset = UIEdgeInsetsMake(0.0, CGRectGetWidth(self.table.bounds), 0.0, 0.0);
+    }
+
+    UIView *subtitleView = [cell.contentView viewWithTag:7105];
+    UILabel *subtitleLabel = [subtitleView isKindOfClass:UILabel.class] ? (UILabel *)subtitleView : nil;
+    NSString *subtitle = [PPIconManager subtitleForTitle:title];
+    NSString *valueText = cell.detailTextLabel.text;
+    BOOL hasValue = valueText.length > 0;
+    BOOL selectionRow = cell.accessoryType == UITableViewCellAccessoryDisclosureIndicator;
+    CGFloat leading = icon && iconBadge ? CGRectGetMaxX(iconBadge.frame) + 12.0 : 16.0;
+    CGFloat trailing = CGRectGetWidth(cell.contentView.bounds) - 16.0;
+    if (cell.accessoryView) {
+        trailing = MIN(trailing, CGRectGetMinX(cell.accessoryView.frame) - 12.0);
+    } else if (cell.accessoryType != UITableViewCellAccessoryNone) {
+        trailing -= 26.0;
+    }
+
+    if (!selectionRow && (hasValue || subtitle.length > 0)) {
+        if (!subtitleLabel) {
+            subtitleLabel = [[UILabel alloc] initWithFrame:CGRectZero];
+            subtitleLabel.tag = 7105;
+            subtitleLabel.font = [UIFont systemFontOfSize:12.0 weight:UIFontWeightRegular];
+            subtitleLabel.textColor = UIColor.secondaryLabelColor;
+            subtitleLabel.numberOfLines = 1;
+            subtitleLabel.lineBreakMode = NSLineBreakByTruncatingTail;
+            [cell.contentView addSubview:subtitleLabel];
+        }
+        [cell layoutIfNeeded];
+        subtitleLabel.text = hasValue ? valueText : subtitle;
+        subtitleLabel.hidden = NO;
+        subtitleLabel.textColor = UIColor.secondaryLabelColor;
+        CGFloat labelWidth = MAX(0.0, trailing - leading);
+        cell.textLabel.frame = CGRectMake(leading, 8.0, labelWidth, 22.0);
+        subtitleLabel.frame = CGRectMake(leading, 32.0, labelWidth, 17.0);
+        cell.detailTextLabel.hidden = hasValue;
+    } else {
+        subtitleLabel.hidden = YES;
+        cell.detailTextLabel.hidden = NO;
+        CGFloat titleWidth = MAX(0.0, trailing - leading);
+        if (hasValue && cell.detailTextLabel && selectionRow) {
+            CGFloat valueWidth = MIN(CGRectGetWidth(cell.contentView.bounds) * 0.35, 90.0);
+            cell.detailTextLabel.textAlignment = NSTextAlignmentRight;
+            cell.detailTextLabel.frame = CGRectMake(trailing - valueWidth, 0.0, valueWidth, CGRectGetHeight(cell.contentView.bounds));
+            titleWidth = MAX(0.0, CGRectGetMinX(cell.detailTextLabel.frame) - leading - 8.0);
+        }
+        cell.textLabel.frame = CGRectMake(leading,
+                                          floor((CGRectGetHeight(cell.contentView.bounds) - 22.0) / 2.0),
+                                          titleWidth,
+                                          22.0);
+    }
 }
 
 - (void)viewWillAppear:(BOOL)animated {
@@ -174,10 +347,9 @@ extern char **environ;
     NSMutableArray<PSSpecifier *> *specifiers = [NSMutableArray array];
 
     if ([manager isOptionEnabled:@"PPSafeMode"]) {
-        [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"SAFE MODE"]];
-        PSSpecifier *safeModeGroup = specifiers.lastObject;
-        [safeModeGroup setProperty:@"Safe Mode limits this page to device status and recovery actions." forKey:@"footerText"];
+        [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"Safe Mode"]];
         [specifiers addObject:[self switchSpecifierWithTitle:@"Safe Mode" key:@"PPSafeMode" default:@NO]];
+        [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"Device Status"]];
         [self addDeviceStatusSpecifiersToArray:specifiers manager:manager];
         [self addRecoverySpecifiersToArray:specifiers];
         [specifiers addObject:[self buttonSpecifierWithTitle:@"Refresh Device Status" action:@selector(refreshDeviceStatus)]];
@@ -186,75 +358,60 @@ extern char **environ;
         return _specifiers;
     }
 
-    [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"PERFORMANCE"]];
-    PSSpecifier *performanceGroup = specifiers.lastObject;
-    [performanceGroup setProperty:@"Public iOS APIs provide read-only status only. They cannot safely change system-wide performance; iOS remains in control." forKey:@"footerText"];
+    [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"Performance"]];
+    [specifiers addObject:[self unsupportedSpecifierWithTitle:@"Master Optimization"]];
     [specifiers addObject:[self switchSpecifierWithTitle:@"Automatic Status Updates" key:@"PPAutomaticStatusUpdates" default:@YES]];
     [specifiers addObject:[self valueSpecifierWithTitle:@"Refresh Rate" value:manager.displayRefreshRateStatus]];
-    [specifiers addObject:[self valueSpecifierWithTitle:@"FPS Control" value:[NSString stringWithFormat:@"%@ App frame-rate limits are app-specific; no system-wide control is available.", manager.displayRefreshRateStatus]]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"FPS / Frame Pacing" value:@"App-specific frame-rate limits"]];
     [specifiers addObject:[self unsupportedSpecifierWithTitle:@"Touch Optimization"]];
     [specifiers addObject:[self unsupportedSpecifierWithTitle:@"Touch Response"]];
     [specifiers addObject:[self unsupportedSpecifierWithTitle:@"Gesture Responsiveness"]];
     [specifiers addObject:[self unsupportedSpecifierWithTitle:@"Stutter Reduction"]];
-    [specifiers addObject:[self valueSpecifierWithTitle:@"Gaming Mode" value:[NSString stringWithFormat:@"No public system-wide game mode API. Thermal: %@; power: %@.", manager.thermalStatus, manager.powerStatus]]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Gaming Mode" value:[NSString stringWithFormat:@"Thermal: %@ · Power: %@", manager.thermalStatus, manager.powerStatus]]];
     [specifiers addObject:[self unsupportedSpecifierWithTitle:@"Auto Performance Profile"]];
 
-    [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"STABILITY"]];
-    PSSpecifier *stabilityGroup = specifiers.lastObject;
-    [stabilityGroup setProperty:@"System-wide gesture, keyboard, and stability changes are not exposed through safe public iOS APIs." forKey:@"footerText"];
+    [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"Stability"]];
     [specifiers addObject:[self unsupportedSpecifierWithTitle:@"Stability / Anti-Glitch"]];
-    [specifiers addObject:[self unsupportedSpecifierWithTitle:@"Anti-Spam Swipe"]];
+    [specifiers addObject:[self unsupportedSpecifierWithTitle:@"Swipe Optimization"]];
     [specifiers addObject:[self unsupportedSpecifierWithTitle:@"Keyboard Optimization"]];
     [specifiers addObject:[self unsupportedSpecifierWithTitle:@"Control Center Optimization"]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"App Compatibility Mode" value:@"Detection only"]];
 
-    [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"APP COMPATIBILITY"]];
-    [specifiers addObject:[self valueSpecifierWithTitle:@"App Compatibility Mode" value:[NSString stringWithFormat:@"%@ Detection only; iOS exposes no safe per-app compatibility override.", manager.deviceCapabilityStatus]]];
-
-    [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"EXPERIMENTAL"]];
-    [specifiers addObject:[self valueSpecifierWithTitle:@"RAM Optimization (BETA)" value:[NSString stringWithFormat:@"%@ Read-only; iOS manages memory reclamation.", manager.memoryStatus]]];
-    [specifiers addObject:[self valueSpecifierWithTitle:@"CPU Optimization (BETA)" value:[NSString stringWithFormat:@"%@ Read-only telemetry; CPU speed controls are not available.", manager.cpuUsageStatus]]];
-    [specifiers addObject:[self unsupportedSpecifierWithTitle:@"GPU Optimization (BETA)"]];
-
-    [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"THERMAL MANAGEMENT"]];
-    [specifiers addObject:[self valueSpecifierWithTitle:@"Thermal Management" value:[NSString stringWithFormat:@"Current state: %@ (read-only; iOS manages thermal response).", manager.thermalStatus]]];
+    [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"System"]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"RAM Optimization (Beta)" value:[NSString stringWithFormat:@"Read-only · %@", manager.memoryStatus]]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"CPU Optimization (Beta)" value:[NSString stringWithFormat:@"Read-only · %@", manager.cpuUsageStatus]]];
+    [specifiers addObject:[self unsupportedSpecifierWithTitle:@"GPU Optimization (Beta)"]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Thermal Management" value:[NSString stringWithFormat:@"iOS managed · %@", manager.thermalStatus]]];
     [specifiers addObject:[self unsupportedSpecifierWithTitle:@"Thermal Profile"]];
-
-    [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"BACKGROUND ACTIVITY"]];
     [specifiers addObject:[self unsupportedSpecifierWithTitle:@"Background Activity Control"]];
 
-    [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"RECORDING"]];
-    [specifiers addObject:[self valueSpecifierWithTitle:@"Screen Recording Optimization" value:[NSString stringWithFormat:@"%@ Status only; recording behavior is controlled by iOS.", manager.displayCaptureStatus]]];
+    [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"Recording & Power"]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Screen Recording Status" value:manager.displayCaptureStatus]];
 
-    [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"BATTERY"]];
     [specifiers addObject:[self switchSpecifierWithTitle:@"Charging & Heat Alerts" key:@"PPChargingReminderEnabled" default:@YES]];
     [specifiers addObject:[self listSpecifierWithTitle:@"Charging Reminder Threshold"
                                                    key:@"PPChargingReminderThreshold"
                                            defaultValue:@"80"
                                                  values:@[@"80", @"85", @"90", @"95", @"100"]
                                                  titles:@[@"80%", @"85%", @"90%", @"95%", @"100%"]]];
-    [specifiers addObject:[self valueSpecifierWithTitle:@"Charging Optimization" value:@"Reminds at your chosen threshold and warns if iOS reports serious heat while charging. Alerts work only while this Settings page is open; unplug manually."]];
-    [specifiers addObject:[self valueSpecifierWithTitle:@"Battery Optimization" value:[NSString stringWithFormat:@"%@; %@ (read-only).", manager.batteryStatus, manager.powerStatus]]];
-    [specifiers addObject:[self valueSpecifierWithTitle:@"Optimized Charging" value:@"For routine-based charging, enable Apple's built-in Optimized Battery Charging in Settings → Battery."]];
-    [specifiers addObject:[self valueSpecifierWithTitle:@"Charging Heat Advice" value:@"Avoid direct sunlight and demanding games while charging. If unusually hot, disconnect power and let iPhone cool naturally."]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Charging Optimization" value:@"Manual reminder; iOS controls charging"]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Battery Optimization" value:[NSString stringWithFormat:@"Status · %@ · %@", manager.batteryStatus, manager.powerStatus]]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Optimized Charging" value:@"Use iOS Battery settings"]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Charging Heat Advice" value:@"Keep the device cool while charging"]];
 
     [self addRecoverySpecifiersToArray:specifiers];
+    [specifiers addObject:[self buttonSpecifierWithTitle:@"Refresh Device Status" action:@selector(refreshDeviceStatus)]];
+    [specifiers addObject:[self buttonSpecifierWithTitle:@"Respring" action:@selector(confirmRespring)]];
 
-    [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"SETTINGS STORAGE"]];
-    [specifiers addObject:[self valueSpecifierWithTitle:@"Preference Storage" value:@"Stored in the com.blue.performanceplus settings domain."]];
-
+    [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"About"]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Preference Storage" value:@"Saved on this device"]];
     [self addDeviceStatusSpecifiersToArray:specifiers manager:manager];
-
-    [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"ABOUT"]];
     [specifiers addObject:[self valueSpecifierWithTitle:@"PerformancePlus" value:@"Low-overhead device status"]];
-    [specifiers addObject:[self valueSpecifierWithTitle:@"Version" value:@"1.1.4"]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Version" value:@"1.1.5"]];
     [specifiers addObject:[self valueSpecifierWithTitle:@"Device" value:manager.deviceModel]];
     [specifiers addObject:[self valueSpecifierWithTitle:@"iOS" value:manager.systemVersion]];
     [specifiers addObject:[self valueSpecifierWithTitle:@"Jailbreak" value:@"Dopamine rootless" ]];
     [specifiers addObject:[self valueSpecifierWithTitle:@"Rootless status" value:@"Rootless compatible"]];
-
-    [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"ACTIONS"]];
-    [specifiers addObject:[self buttonSpecifierWithTitle:@"Refresh Device Status" action:@selector(refreshDeviceStatus)]];
-    [specifiers addObject:[self buttonSpecifierWithTitle:@"Respring" action:@selector(confirmRespring)]];
 
     _specifiers = specifiers;
     return _specifiers;
@@ -262,7 +419,6 @@ extern char **environ;
 
 - (void)addDeviceStatusSpecifiersToArray:(NSMutableArray<PSSpecifier *> *)specifiers
                                  manager:(PPManager *)manager {
-    [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"DEVICE STATUS"]];
     [specifiers addObject:[self valueSpecifierWithTitle:@"Device Capability" value:manager.deviceCapabilityStatus]];
     [specifiers addObject:[self valueSpecifierWithTitle:@"Maximum Display Refresh Rate" value:manager.displayRefreshRateStatus]];
     [specifiers addObject:[self valueSpecifierWithTitle:@"Display Capture" value:manager.displayCaptureStatus]];
@@ -317,6 +473,10 @@ extern char **environ;
 }
 
 - (PSSpecifier *)valueSpecifierWithTitle:(NSString *)title value:(NSString *)value {
+    NSString *displayValue = [value isKindOfClass:NSString.class] ? value : @"Unavailable";
+    if ([displayValue hasPrefix:@"Not Supported "]) {
+        displayValue = @"Not Supported";
+    }
     PSSpecifier *specifier = [PSSpecifier preferenceSpecifierNamed:title
                                                             target:self
                                                                set:nil
@@ -324,7 +484,7 @@ extern char **environ;
                                                             detail:nil
                                                               cell:PSTitleValueCell
                                                               edit:nil];
-    [specifier setProperty:([value isKindOfClass:NSString.class] && value.length > 0 ? value : @"Unavailable") forKey:@"value"];
+    [specifier setProperty:(displayValue.length > 0 ? displayValue : @"Unavailable") forKey:@"value"];
     return specifier;
 }
 
