@@ -30,8 +30,8 @@ version, memory, battery, thermal state, power mode, and uptime.
 ## What you’ll find
 
 - **Device information:** model, iOS version, logical CPU core count, and
-  device-wide CPU usage. Tap **Refresh Device Status** twice to get a CPU
-  usage sample.
+  device-wide CPU usage. The first **Refresh Device Status** establishes a
+  baseline; the next reports average usage between refreshes.
 - **Device capability:** identifies iPhone 6s and newer models and reports
   the display's maximum refresh rate (read-only; iOS controls the active rate).
 - **System status:** memory, battery level and charging state, thermal state,
@@ -104,7 +104,7 @@ unsupported performance controls do not apply system changes.
 | `-displayCaptureStatus` | Reads whether iOS reports the display as currently captured or mirrored. |
 | `-systemVersion` | Returns the installed iOS version. |
 | `-cpuStatus` | Reports the logical processor count. |
-| `-cpuUsageStatus` | Samples device-wide CPU ticks using the public Mach host statistics API and reports usage between refreshes. |
+| `-cpuUsageStatus` | Samples device-wide CPU ticks using the public Mach host statistics API and reports average usage between successive refreshes. |
 | `-memoryStatus` | Reads and formats memory statistics using user-space APIs. |
 | `-batteryStatus` | Enables battery monitoring for the Settings process and reports battery level and charging state when available. |
 | `-thermalStatus` | Reports the iOS thermal state when available. |
