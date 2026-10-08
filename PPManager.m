@@ -338,14 +338,14 @@ static NSSet<NSString *> *PPOptionKeys(void) {
         return @"Unavailable";
     }
 
-    uint32_t activeTicks = loadInfo.cpu_ticks[CPU_STATE_USER] +
+    uint64_t activeTicks = (uint64_t)loadInfo.cpu_ticks[CPU_STATE_USER] +
                            loadInfo.cpu_ticks[CPU_STATE_SYSTEM] +
                            loadInfo.cpu_ticks[CPU_STATE_NICE];
-    uint32_t totalTicks = activeTicks + loadInfo.cpu_ticks[CPU_STATE_IDLE];
+    uint64_t totalTicks = activeTicks + loadInfo.cpu_ticks[CPU_STATE_IDLE];
 
     static BOOL hasPreviousSample = NO;
-    static uint32_t previousActiveTicks = 0;
-    static uint32_t previousTotalTicks = 0;
+    static uint64_t previousActiveTicks = 0;
+    static uint64_t previousTotalTicks = 0;
     @synchronized (self) {
         if (!hasPreviousSample) {
             hasPreviousSample = YES;
@@ -354,8 +354,8 @@ static NSSet<NSString *> *PPOptionKeys(void) {
             return @"Sampling — refresh again for CPU usage";
         }
 
-        uint32_t activeDelta = activeTicks - previousActiveTicks;
-        uint32_t totalDelta = totalTicks - previousTotalTicks;
+        uint64_t activeDelta = activeTicks - previousActiveTicks;
+        uint64_t totalDelta = totalTicks - previousTotalTicks;
         previousActiveTicks = activeTicks;
         previousTotalTicks = totalTicks;
         if (totalDelta == 0) {

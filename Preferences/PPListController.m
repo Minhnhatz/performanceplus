@@ -91,45 +91,46 @@ extern char **environ;
 
     [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"PERFORMANCE"]];
     PSSpecifier *performanceGroup = specifiers.lastObject;
-    [performanceGroup setProperty:@"Only supported, read-only device status and local preferences are active. iOS controls system performance." forKey:@"footerText"];
+    [performanceGroup setProperty:@"Public iOS APIs provide read-only status only. They cannot safely change system-wide performance; iOS remains in control." forKey:@"footerText"];
     [specifiers addObject:[self switchSpecifierWithTitle:@"Automatic Status Updates" key:@"PPAutomaticStatusUpdates" default:@YES]];
-    [specifiers addObject:[self unsupportedSpecifierWithTitle:@"Refresh Rate"]];
-    [specifiers addObject:[self unsupportedSpecifierWithTitle:@"FPS Control"]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Refresh Rate" value:manager.displayRefreshRateStatus]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"FPS Control" value:[NSString stringWithFormat:@"%@ App frame-rate limits are app-specific; no system-wide control is available.", manager.displayRefreshRateStatus]]];
     [specifiers addObject:[self unsupportedSpecifierWithTitle:@"Touch Optimization"]];
     [specifiers addObject:[self unsupportedSpecifierWithTitle:@"Touch Response"]];
     [specifiers addObject:[self unsupportedSpecifierWithTitle:@"Gesture Responsiveness"]];
     [specifiers addObject:[self unsupportedSpecifierWithTitle:@"Stutter Reduction"]];
-    [specifiers addObject:[self unsupportedSpecifierWithTitle:@"Gaming Mode"]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Gaming Mode" value:[NSString stringWithFormat:@"No public system-wide game mode API. Thermal: %@; power: %@.", manager.thermalStatus, manager.powerStatus]]];
     [specifiers addObject:[self unsupportedSpecifierWithTitle:@"Auto Performance Profile"]];
 
     [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"STABILITY"]];
+    PSSpecifier *stabilityGroup = specifiers.lastObject;
+    [stabilityGroup setProperty:@"System-wide gesture, keyboard, and stability changes are not exposed through safe public iOS APIs." forKey:@"footerText"];
     [specifiers addObject:[self unsupportedSpecifierWithTitle:@"Stability / Anti-Glitch"]];
     [specifiers addObject:[self unsupportedSpecifierWithTitle:@"Anti-Spam Swipe"]];
     [specifiers addObject:[self unsupportedSpecifierWithTitle:@"Keyboard Optimization"]];
     [specifiers addObject:[self unsupportedSpecifierWithTitle:@"Control Center Optimization"]];
 
     [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"APP COMPATIBILITY"]];
-    [specifiers addObject:[self unsupportedSpecifierWithTitle:@"App Compatibility Mode"]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"App Compatibility Mode" value:[NSString stringWithFormat:@"%@ Detection only; iOS exposes no safe per-app compatibility override.", manager.deviceCapabilityStatus]]];
 
     [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"EXPERIMENTAL"]];
-    [specifiers addObject:[self unsupportedSpecifierWithTitle:@"RAM Optimization (BETA)"]];
-    [specifiers addObject:[self unsupportedSpecifierWithTitle:@"CPU Optimization (BETA)"]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"RAM Optimization (BETA)" value:[NSString stringWithFormat:@"%@ Read-only; iOS manages memory reclamation.", manager.memoryStatus]]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"CPU Optimization (BETA)" value:[NSString stringWithFormat:@"%@ Read-only telemetry; CPU speed controls are not available.", manager.cpuUsageStatus]]];
     [specifiers addObject:[self unsupportedSpecifierWithTitle:@"GPU Optimization (BETA)"]];
 
     [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"THERMAL MANAGEMENT"]];
-    [specifiers addObject:[self unsupportedSpecifierWithTitle:@"Thermal Management"]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Thermal Management" value:[NSString stringWithFormat:@"Current state: %@ (read-only; iOS manages thermal response).", manager.thermalStatus]]];
     [specifiers addObject:[self unsupportedSpecifierWithTitle:@"Thermal Profile"]];
-    [specifiers addObject:[self valueSpecifierWithTitle:@"Thermal State" value:[manager thermalStatus]]];
 
     [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"BACKGROUND ACTIVITY"]];
     [specifiers addObject:[self unsupportedSpecifierWithTitle:@"Background Activity Control"]];
 
     [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"RECORDING"]];
-    [specifiers addObject:[self unsupportedSpecifierWithTitle:@"Screen Recording Optimization"]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Screen Recording Optimization" value:[NSString stringWithFormat:@"%@ Status only; recording behavior is controlled by iOS.", manager.displayCaptureStatus]]];
 
     [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"BATTERY"]];
-    [specifiers addObject:[self unsupportedSpecifierWithTitle:@"Charging Optimization"]];
-    [specifiers addObject:[self unsupportedSpecifierWithTitle:@"Battery Optimization"]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Charging Optimization" value:[NSString stringWithFormat:@"%@ Status only; charging controls are not exposed.", manager.batteryStatus]]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Battery Optimization" value:[NSString stringWithFormat:@"%@; %@ (read-only).", manager.batteryStatus, manager.powerStatus]]];
 
     [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"RECOVERY"]];
     [self addRecoverySpecifiersToArray:specifiers];
@@ -141,7 +142,7 @@ extern char **environ;
 
     [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"ABOUT"]];
     [specifiers addObject:[self valueSpecifierWithTitle:@"PerformancePlus" value:@"Safe performance management"]];
-    [specifiers addObject:[self valueSpecifierWithTitle:@"Version" value:@"1.0.5"]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Version" value:@"1.0.6"]];
     [specifiers addObject:[self valueSpecifierWithTitle:@"Device" value:manager.deviceModel]];
     [specifiers addObject:[self valueSpecifierWithTitle:@"iOS" value:manager.systemVersion]];
     [specifiers addObject:[self valueSpecifierWithTitle:@"Jailbreak" value:@"Dopamine rootless" ]];
