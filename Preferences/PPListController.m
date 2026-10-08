@@ -9,10 +9,64 @@
 extern char **environ;
 
 @interface PPListController ()
-@property (nonatomic) BOOL hasLoadedDeviceStatus;
+@property (nonatomic) BOOL observingStatusChanges;
 @end
 
 @implementation PPListController
+
+- (void)viewWillAppear:(BOOL)animated {
+    [super viewWillAppear:animated];
+    [self startObservingStatusChanges];
+}
+
+- (void)viewWillDisappear:(BOOL)animated {
+    [super viewWillDisappear:animated];
+    [self stopObservingStatusChanges];
+}
+
+- (void)startObservingStatusChanges {
+    if (self.observingStatusChanges ||
+        ![PPManager.sharedManager isOptionEnabled:@"PPAutomaticStatusUpdates"]) {
+        return;
+    }
+
+    NSNotificationCenter *notificationCenter = NSNotificationCenter.defaultCenter;
+    NSArray<NSNotificationName> *notifications = @[
+        UIDeviceBatteryLevelDidChangeNotification,
+        UIDeviceBatteryStateDidChangeNotification,
+        NSProcessInfoThermalStateDidChangeNotification,
+        NSProcessInfoPowerStateDidChangeNotification,
+        UIScreenCapturedDidChangeNotification
+    ];
+    for (NSNotificationName notification in notifications) {
+        [notificationCenter addObserver:self
+                               selector:@selector(statusDidChange:)
+                                   name:notification
+                                 object:nil];
+    }
+    self.observingStatusChanges = YES;
+}
+
+- (void)stopObservingStatusChanges {
+    if (!self.observingStatusChanges) {
+        return;
+    }
+    [NSNotificationCenter.defaultCenter removeObserver:self];
+    self.observingStatusChanges = NO;
+}
+
+- (void)statusDidChange:(NSNotification *)notification {
+    (void)notification;
+    if (!self.view.window) {
+        return;
+    }
+
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if (self.view.window) {
+            [self refreshDeviceStatus];
+        }
+    });
+}
 
 - (NSArray *)specifiers {
     if (_specifiers) {
@@ -22,10 +76,23 @@ extern char **environ;
     PPManager *manager = PPManager.sharedManager;
     NSMutableArray<PSSpecifier *> *specifiers = [NSMutableArray array];
 
+    if ([manager isOptionEnabled:@"PPSafeMode"]) {
+        [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"SAFE MODE"]];
+        PSSpecifier *safeModeGroup = specifiers.lastObject;
+        [safeModeGroup setProperty:@"Safe Mode limits this page to device status and recovery actions." forKey:@"footerText"];
+        [specifiers addObject:[self switchSpecifierWithTitle:@"Safe Mode" key:@"PPSafeMode" default:@NO]];
+        [self addDeviceStatusSpecifiersToArray:specifiers manager:manager];
+        [self addRecoverySpecifiersToArray:specifiers];
+        [specifiers addObject:[self buttonSpecifierWithTitle:@"Refresh Device Status" action:@selector(refreshDeviceStatus)]];
+        [specifiers addObject:[self buttonSpecifierWithTitle:@"Respring" action:@selector(confirmRespring)]];
+        _specifiers = specifiers;
+        return _specifiers;
+    }
+
     [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"PERFORMANCE"]];
     PSSpecifier *performanceGroup = specifiers.lastObject;
-    [performanceGroup setProperty:@"Safe, user-space settings only. No kernel or voltage changes are made." forKey:@"footerText"];
-    [specifiers addObject:[self switchSpecifierWithTitle:@"Enable PerformancePlus" key:@"enabled" default:@YES]];
+    [performanceGroup setProperty:@"Only supported, read-only device status and local preferences are active. iOS controls system performance." forKey:@"footerText"];
+    [specifiers addObject:[self switchSpecifierWithTitle:@"Automatic Status Updates" key:@"PPAutomaticStatusUpdates" default:@YES]];
     [specifiers addObject:[self unsupportedSpecifierWithTitle:@"Refresh Rate"]];
     [specifiers addObject:[self unsupportedSpecifierWithTitle:@"FPS Control"]];
     [specifiers addObject:[self unsupportedSpecifierWithTitle:@"Touch Optimization"]];
@@ -65,26 +132,16 @@ extern char **environ;
     [specifiers addObject:[self unsupportedSpecifierWithTitle:@"Battery Optimization"]];
 
     [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"RECOVERY"]];
-    [specifiers addObject:[self switchSpecifierWithTitle:@"Safe Mode" key:@"PPSafeMode" default:@NO]];
-    [specifiers addObject:[self buttonSpecifierWithTitle:@"Disable Experimental Features" action:@selector(disableExperimentalFeatures)]];
-    [specifiers addObject:[self buttonSpecifierWithTitle:@"Reset All Settings" action:@selector(resetAllSettings)]];
-    [specifiers addObject:[self buttonSpecifierWithTitle:@"Restore Safe Defaults" action:@selector(restoreSafeDefaults)]];
+    [self addRecoverySpecifiersToArray:specifiers];
 
     [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"SETTINGS STORAGE"]];
     [specifiers addObject:[self valueSpecifierWithTitle:@"Preference Storage" value:@"Stored in the com.blue.performanceplus settings domain."]];
 
-    [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"DEVICE STATUS"]];
-    [specifiers addObject:[self valueSpecifierWithTitle:@"CPU Information" value:manager.cpuStatus]];
-    [specifiers addObject:[self valueSpecifierWithTitle:@"Memory Information" value:manager.memoryStatus]];
-    [specifiers addObject:[self valueSpecifierWithTitle:@"Battery Information" value:manager.batteryStatus]];
-    [specifiers addObject:[self valueSpecifierWithTitle:@"Power Mode" value:manager.powerStatus]];
-    [specifiers addObject:[self valueSpecifierWithTitle:@"Uptime" value:manager.uptimeStatus]];
-    [specifiers addObject:[self valueSpecifierWithTitle:@"iOS Version" value:manager.systemVersion]];
-    [specifiers addObject:[self valueSpecifierWithTitle:@"Device Model" value:manager.deviceModel]];
+    [self addDeviceStatusSpecifiersToArray:specifiers manager:manager];
 
     [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"ABOUT"]];
     [specifiers addObject:[self valueSpecifierWithTitle:@"PerformancePlus" value:@"Safe performance management"]];
-    [specifiers addObject:[self valueSpecifierWithTitle:@"Version" value:@"1.0.2"]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Version" value:@"1.0.5"]];
     [specifiers addObject:[self valueSpecifierWithTitle:@"Device" value:manager.deviceModel]];
     [specifiers addObject:[self valueSpecifierWithTitle:@"iOS" value:manager.systemVersion]];
     [specifiers addObject:[self valueSpecifierWithTitle:@"Jailbreak" value:@"Dopamine rootless" ]];
@@ -96,6 +153,30 @@ extern char **environ;
 
     _specifiers = specifiers;
     return _specifiers;
+}
+
+- (void)addDeviceStatusSpecifiersToArray:(NSMutableArray<PSSpecifier *> *)specifiers
+                                 manager:(PPManager *)manager {
+    [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"DEVICE STATUS"]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Device Capability" value:manager.deviceCapabilityStatus]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Maximum Display Refresh Rate" value:manager.displayRefreshRateStatus]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Display Capture" value:manager.displayCaptureStatus]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"CPU Information" value:manager.cpuStatus]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"CPU Usage" value:manager.cpuUsageStatus]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Memory Information" value:manager.memoryStatus]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Battery Information" value:manager.batteryStatus]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Power Mode" value:manager.powerStatus]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Uptime" value:manager.uptimeStatus]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"iOS Version" value:manager.systemVersion]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Device Model" value:manager.deviceModel]];
+}
+
+- (void)addRecoverySpecifiersToArray:(NSMutableArray<PSSpecifier *> *)specifiers {
+    [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"RECOVERY"]];
+    [specifiers addObject:[self switchSpecifierWithTitle:@"Safe Mode" key:@"PPSafeMode" default:@NO]];
+    [specifiers addObject:[self buttonSpecifierWithTitle:@"Disable Experimental Features" action:@selector(disableExperimentalFeatures)]];
+    [specifiers addObject:[self buttonSpecifierWithTitle:@"Reset All Settings" action:@selector(resetAllSettings)]];
+    [specifiers addObject:[self buttonSpecifierWithTitle:@"Restore Safe Defaults" action:@selector(restoreSafeDefaults)]];
 }
 
 - (PSSpecifier *)switchSpecifierWithTitle:(NSString *)title key:(NSString *)key default:(NSNumber *)defaultValue {
@@ -197,11 +278,18 @@ extern char **environ;
         } else {
             [manager setOption:key enabled:[value boolValue]];
         }
+
+        if ([key isEqualToString:@"PPAutomaticStatusUpdates"]) {
+            [self stopObservingStatusChanges];
+            [self startObservingStatusChanges];
+        } else if ([key isEqualToString:@"PPSafeMode"]) {
+            _specifiers = nil;
+            [self reloadSpecifiers];
+        }
     }
 }
 
 - (void)refreshDeviceStatus {
-    self.hasLoadedDeviceStatus = YES;
     _specifiers = nil;
     [self reloadSpecifiers];
 }

@@ -29,10 +29,21 @@ version, memory, battery, thermal state, power mode, and uptime.
 
 ## What you’ll find
 
-- **Device information:** model, iOS version, and logical CPU core count.
-- **System status:** memory, battery, thermal state, power mode, and uptime.
+- **Device information:** model, iOS version, logical CPU core count, and
+  device-wide CPU usage. Tap **Refresh Device Status** twice to get a CPU
+  usage sample.
+- **Device capability:** identifies iPhone 6s and newer models and reports
+  the display's maximum refresh rate (read-only; iOS controls the active rate).
+- **System status:** memory, battery level and charging state, thermal state,
+  Low Power Mode, display capture/mirroring status, and uptime. Battery status
+  monitoring is enabled for the Settings app when you view this information.
 - **Recovery options:** safe mode, reset actions, and a respring action that
   requires your confirmation.
+- **Automatic status updates:** update the displayed battery, thermal,
+  power-mode, and display-capture status when iOS reports a change. You can
+  turn live updates off and refresh status manually.
+- **Safe Mode:** switch to a reduced Settings page containing device status
+  and recovery controls. It does not modify or bypass iOS safety protections.
 - **Preference storage:** your saved settings are kept in the
   `com.blue.performanceplus` preferences domain.
 
@@ -88,10 +99,14 @@ unsupported performance controls do not apply system changes.
 | `-experimentalMessage` | Returns the experimental-feature notice. |
 | `-limitedByIOSMessage` | Returns the notice that behavior is limited by iOS. |
 | `-deviceModel` | Returns the device model and, when available, its hardware identifier. |
+| `-deviceCapabilityStatus` | Checks the hardware identifier and reports whether the device is an iPhone 6s or newer. |
+| `-displayRefreshRateStatus` | Reports the display's maximum reported refresh rate without attempting to change it. |
+| `-displayCaptureStatus` | Reads whether iOS reports the display as currently captured or mirrored. |
 | `-systemVersion` | Returns the installed iOS version. |
 | `-cpuStatus` | Reports the logical processor count. |
+| `-cpuUsageStatus` | Samples device-wide CPU ticks using the public Mach host statistics API and reports usage between refreshes. |
 | `-memoryStatus` | Reads and formats memory statistics using user-space APIs. |
-| `-batteryStatus` | Reports battery level and charging state when available. |
+| `-batteryStatus` | Enables battery monitoring for the Settings process and reports battery level and charging state when available. |
 | `-thermalStatus` | Reports the iOS thermal state when available. |
 | `-powerStatus` | Reports whether Low Power Mode is enabled. |
 | `-uptimeStatus` | Formats the system uptime. |
@@ -116,6 +131,10 @@ unsupported performance controls do not apply system changes.
 | `-confirmRespring` | Asks for confirmation before offering a respring action. |
 | `-respring` | Starts the rootless `sbreload` utility after confirmation and reports failures. |
 | `-showMessage:message:` | Displays an alert with a title and message. |
+| `-startObservingStatusChanges` / `-stopObservingStatusChanges` | Subscribe to battery, thermal, power-mode, and display-capture changes while the Settings page is visible. |
+| `-statusDidChange:` | Refreshes the visible status rows on the main queue after a supported system status changes. |
+| `-addDeviceStatusSpecifiersToArray:manager:` | Adds live device-information rows to the normal or Safe Mode page. |
+| `-addRecoverySpecifiersToArray:` | Adds Safe Mode, reset, and restore controls. |
 
 ### `Tweak.x`
 

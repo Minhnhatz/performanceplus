@@ -43,7 +43,8 @@ static NSArray<NSString *> *PPDefaultFeatureKeys(void) {
             @"PPThermalProfile",
             @"PPBackgroundActivity",
             @"PPBackgroundMode",
-            @"PPSafeMode"
+            @"PPSafeMode",
+            @"PPAutomaticStatusUpdates"
         ];
     });
     return keys;
@@ -51,6 +52,17 @@ static NSArray<NSString *> *PPDefaultFeatureKeys(void) {
 
 static NSUserDefaults *PPPreferences(void) {
     return [[NSUserDefaults alloc] initWithSuiteName:kPPDomain];
+}
+
+static NSString *PPHardwareIdentifier(void) {
+    char machine[256] = {0};
+    size_t size = sizeof(machine);
+    if (sysctlbyname("hw.machine", machine, &size, NULL, 0) != 0) {
+        return @"";
+    }
+
+    machine[sizeof(machine) - 1] = '\0';
+    return [NSString stringWithUTF8String:machine] ?: @"";
 }
 
 static NSDictionary<NSString *, id> *PPDefaultPreferences(void) {
@@ -86,7 +98,8 @@ static NSDictionary<NSString *, id> *PPDefaultPreferences(void) {
             @"PPThermalProfile": @"Auto",
             @"PPBackgroundActivity": @YES,
             @"PPBackgroundMode": @"Auto",
-            @"PPSafeMode": @NO
+            @"PPSafeMode": @NO,
+            @"PPAutomaticStatusUpdates": @YES
         };
     });
     return defaults;
@@ -252,19 +265,48 @@ static NSSet<NSString *> *PPOptionKeys(void) {
 }
 
 - (NSString *)deviceModel {
-    char machine[256] = {0};
-    size_t size = sizeof(machine);
-    NSString *identifier = @"";
-
-    if (sysctlbyname("hw.machine", machine, &size, NULL, 0) == 0) {
-        machine[sizeof(machine) - 1] = '\0';
-        identifier = [NSString stringWithUTF8String:machine] ?: @"";
-    }
-
+    NSString *identifier = PPHardwareIdentifier();
     NSString *model = UIDevice.currentDevice.model ?: @"Unknown";
     return identifier.length > 0
         ? [NSString stringWithFormat:@"%@ (%@)", model, identifier]
         : model;
+}
+
+- (NSString *)deviceCapabilityStatus {
+    NSString *model = UIDevice.currentDevice.model ?: @"";
+    NSString *identifier = PPHardwareIdentifier();
+    NSString *generationString = [[identifier componentsSeparatedByString:@","].firstObject
+                                  stringByReplacingOccurrencesOfString:@"iPhone"
+                                  withString:@""];
+    NSInteger generation = generationString.integerValue;
+
+    if ([model rangeOfString:@"iPhone" options:NSCaseInsensitiveSearch].location == NSNotFound ||
+        ![identifier hasPrefix:@"iPhone"] ||
+        generation < 8) {
+        return [NSString stringWithFormat:@"%@ Device information is available; iPhone 6s+ support cannot be confirmed.",
+                self.unsupportedMessage];
+    }
+
+    return [NSString stringWithFormat:@"Compatible (iPhone 6s or later, %@)", identifier];
+}
+
+- (NSString *)displayRefreshRateStatus {
+    NSInteger maximumFramesPerSecond = (NSInteger)UIScreen.mainScreen.maximumFramesPerSecond;
+    if (maximumFramesPerSecond <= 0) {
+        return self.unsupportedMessage;
+    }
+
+    return [NSString stringWithFormat:@"Up to %ld Hz (read-only; controlled by iOS)",
+            (long)maximumFramesPerSecond];
+}
+
+- (NSString *)displayCaptureStatus {
+    if (@available(iOS 11.0, *)) {
+        return UIScreen.mainScreen.isCaptured
+            ? @"Display is being captured or mirrored"
+            : @"No display capture or mirroring detected";
+    }
+    return self.unsupportedMessage;
 }
 
 - (NSString *)systemVersion {
@@ -277,6 +319,53 @@ static NSSet<NSString *> *PPOptionKeys(void) {
         ? [NSString stringWithFormat:@"%lu logical cores",
            (unsigned long)processorCount]
         : @"Unavailable";
+}
+
+- (NSString *)cpuUsageStatus {
+    mach_port_t host = mach_host_self();
+    if (host == MACH_PORT_NULL) {
+        return @"Unavailable";
+    }
+
+    host_cpu_load_info_data_t loadInfo = {0};
+    mach_msg_type_number_t count = HOST_CPU_LOAD_INFO_COUNT;
+    kern_return_t result = host_statistics(host,
+                                           HOST_CPU_LOAD_INFO,
+                                           (host_info_t)&loadInfo,
+                                           &count);
+    mach_port_deallocate(mach_task_self(), host);
+    if (result != KERN_SUCCESS || count < HOST_CPU_LOAD_INFO_COUNT) {
+        return @"Unavailable";
+    }
+
+    uint32_t activeTicks = loadInfo.cpu_ticks[CPU_STATE_USER] +
+                           loadInfo.cpu_ticks[CPU_STATE_SYSTEM] +
+                           loadInfo.cpu_ticks[CPU_STATE_NICE];
+    uint32_t totalTicks = activeTicks + loadInfo.cpu_ticks[CPU_STATE_IDLE];
+
+    static BOOL hasPreviousSample = NO;
+    static uint32_t previousActiveTicks = 0;
+    static uint32_t previousTotalTicks = 0;
+    @synchronized (self) {
+        if (!hasPreviousSample) {
+            hasPreviousSample = YES;
+            previousActiveTicks = activeTicks;
+            previousTotalTicks = totalTicks;
+            return @"Sampling — refresh again for CPU usage";
+        }
+
+        uint32_t activeDelta = activeTicks - previousActiveTicks;
+        uint32_t totalDelta = totalTicks - previousTotalTicks;
+        previousActiveTicks = activeTicks;
+        previousTotalTicks = totalTicks;
+        if (totalDelta == 0) {
+            return @"Sampling — refresh again shortly";
+        }
+
+        double usage = 100.0 * (double)activeDelta / (double)totalDelta;
+        usage = fmin(100.0, fmax(0.0, usage));
+        return [NSString stringWithFormat:@"%.0f%% (device-wide)", usage];
+    }
 }
 
 - (NSString *)memoryStatus {
@@ -323,6 +412,7 @@ static NSSet<NSString *> *PPOptionKeys(void) {
 
 - (NSString *)batteryStatus {
     UIDevice *device = UIDevice.currentDevice;
+    device.batteryMonitoringEnabled = YES;
     float level = device.batteryLevel;
     UIDeviceBatteryState state = device.batteryState;
 

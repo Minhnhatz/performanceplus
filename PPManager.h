@@ -22,8 +22,12 @@
 - (NSString *)experimentalMessage;
 - (NSString *)limitedByIOSMessage;
 - (NSString *)deviceModel;
+- (NSString *)deviceCapabilityStatus;
+- (NSString *)displayRefreshRateStatus;
+- (NSString *)displayCaptureStatus;
 - (NSString *)systemVersion;
 - (NSString *)cpuStatus;
+- (NSString *)cpuUsageStatus;
 - (NSString *)memoryStatus;
 - (NSString *)batteryStatus;
 - (NSString *)thermalStatus;
