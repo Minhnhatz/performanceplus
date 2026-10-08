@@ -13,7 +13,7 @@
         <key>detail</key>
         <string>PPListController</string>
         <key>icon</key>
-        <string>/Library/PreferenceLoader/Preferences/PerformancePlus.png</string>
+        <string>/var/jb/Library/PreferenceLoader/Preferences/PerformancePlus.png</string>
         <key>isController</key>
         <true/>
         <key>label</key>
