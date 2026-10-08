@@ -36,6 +36,7 @@ static NSArray<NSString *> *PPDefaultFeatureKeys(void) {
             @"PPGPUOptimization",
             @"PPRecordingOptimization",
             @"PPChargingOptimization",
+            @"PPChargingReminderEnabled",
             @"PPBatteryOptimization",
             @"PPGamingMode",
             @"PPAutoProfile",
@@ -91,6 +92,7 @@ static NSDictionary<NSString *, id> *PPDefaultPreferences(void) {
             @"PPGPUOptimization": @NO,
             @"PPRecordingOptimization": @YES,
             @"PPChargingOptimization": @YES,
+            @"PPChargingReminderEnabled": @YES,
             @"PPBatteryOptimization": @YES,
             @"PPGamingMode": @NO,
             @"PPAutoProfile": @"Auto",
@@ -413,10 +415,10 @@ static NSSet<NSString *> *PPOptionKeys(void) {
 - (NSString *)batteryStatus {
     UIDevice *device = UIDevice.currentDevice;
     device.batteryMonitoringEnabled = YES;
-    float level = device.batteryLevel;
+    NSInteger percentage = [self batteryLevelPercentage];
     UIDeviceBatteryState state = device.batteryState;
 
-    if (level < 0.0f || level > 1.0f) {
+    if (percentage < 0) {
         return @"Unavailable";
     }
 
@@ -435,8 +437,24 @@ static NSSet<NSString *> *PPOptionKeys(void) {
             break;
     }
 
-    return [NSString stringWithFormat:@"%.0f%% • %@",
-            level * 100.0f, stateDescription];
+    return [NSString stringWithFormat:@"%ld%% • %@",
+            (long)percentage, stateDescription];
+}
+
+- (NSInteger)batteryLevelPercentage {
+    UIDevice *device = UIDevice.currentDevice;
+    device.batteryMonitoringEnabled = YES;
+    float level = device.batteryLevel;
+    if (!isfinite(level) || level < 0.0f || level > 1.0f) {
+        return -1;
+    }
+    return (NSInteger)lroundf(level * 100.0f);
+}
+
+- (BOOL)isBatteryCharging {
+    UIDevice *device = UIDevice.currentDevice;
+    device.batteryMonitoringEnabled = YES;
+    return device.batteryState == UIDeviceBatteryStateCharging;
 }
 
 - (NSString *)thermalStatus {
@@ -454,6 +472,15 @@ static NSSet<NSString *> *PPOptionKeys(void) {
         }
     }
     return @"Thermal monitoring unavailable.";
+}
+
+- (BOOL)isThermalStateSeriousOrCritical {
+    if (@available(iOS 11.0, *)) {
+        NSProcessInfoThermalState state = NSProcessInfo.processInfo.thermalState;
+        return state == NSProcessInfoThermalStateSerious ||
+               state == NSProcessInfoThermalStateCritical;
+    }
+    return NO;
 }
 
 - (NSString *)powerStatus {

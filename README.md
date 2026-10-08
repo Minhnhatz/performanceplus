@@ -39,6 +39,13 @@ SpringBoard or other apps.
 - **System status:** memory, battery level and charging state, thermal state,
   Low Power Mode, display capture/mirroring status, and uptime. Battery status
   monitoring is enabled for the Settings app when you view this information.
+- **Charging and heat alerts:** when enabled, reminds you at 80% and warns if
+  iOS reports a Serious or Critical thermal state while charging. These alerts
+  only work while the PerformancePlus page is open. You must unplug manually;
+  the tweak cannot stop charging or cool the phone. For routine-based charging
+  optimization, use built-in **Settings → Battery** options for your iPhone.
+  If the phone is unusually hot, stop demanding apps, move it out of direct sun
+  to a cool, ventilated place, and let it cool naturally.
 - **Recovery options:** safe mode, reset actions, and a respring action that
   requires your confirmation. They appear in a single Recovery section.
 - **Automatic status updates:** update the displayed battery, thermal,
@@ -138,7 +145,7 @@ protected system performance policy.
 | CPU optimization | Reads host CPU tick deltas and logical core count. | Does not change CPU frequency, voltage, or scheduler policy. |
 | GPU optimization | No safe system-wide GPU tuning API. | Unsupported. |
 | Screen recording optimization | Reads whether iOS reports display capture/mirroring. | Does not alter recording or encoding. |
-| Charging optimization | Reads battery level and charging state. | Does not manipulate charging. |
+| Charging optimization | Reads battery level, charging state, and thermal state; alerts at 80% or when iOS reports Serious/Critical heat while charging. | Alerts are foreground-only and require user action; they do not manipulate charging or replace Apple's learned charging schedule. |
 | Battery optimization | Reads battery state and Low Power Mode. | Cannot turn Low Power Mode on/off or change system power policy. |
 | Gaming mode and auto performance profile | Can display thermal and power status. | No supported system-wide performance profile control. |
 | Thermal management | Reads thermal state and observes change notifications. | iOS controls thermal mitigation; protection is never bypassed. |
@@ -153,6 +160,8 @@ protected system performance policy.
 - [Apple: `UIScreen.isCaptured`](https://developer.apple.com/documentation/uikit/uiscreen/iscaptured)
 - [Apple: `UIDevice.batteryLevel`](https://developer.apple.com/documentation/uikit/uidevice/batterylevel)
 - [Apple: `UIDevice.batteryState`](https://developer.apple.com/documentation/uikit/uidevice/batterystate)
+- [Apple Support: About Optimized Battery Charging](https://support.apple.com/en-us/108055)
+- [Apple Support: Keeping iPhone within acceptable operating temperatures](https://support.apple.com/en-us/118431)
 - [Apple: `ProcessInfo.thermalState`](https://developer.apple.com/documentation/foundation/processinfo/thermalstate-swift.enum)
 - [Apple: `ProcessInfo.isLowPowerModeEnabled`](https://developer.apple.com/documentation/foundation/processinfo/islowpowermodeenabled)
 - [Apple: `ProcessInfo.physicalMemory`](https://developer.apple.com/documentation/foundation/processinfo/physicalmemory)

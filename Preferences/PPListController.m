@@ -10,6 +10,8 @@ extern char **environ;
 
 @interface PPListController ()
 @property (nonatomic) BOOL observingStatusChanges;
+@property (nonatomic) BOOL didShowChargingReminder;
+@property (nonatomic) BOOL didShowChargingHeatWarning;
 @end
 
 @implementation PPListController
@@ -25,19 +27,31 @@ extern char **environ;
 }
 
 - (void)startObservingStatusChanges {
-    if (self.observingStatusChanges ||
-        ![PPManager.sharedManager isOptionEnabled:@"PPAutomaticStatusUpdates"]) {
+    PPManager *manager = PPManager.sharedManager;
+    BOOL automaticUpdates = [manager isOptionEnabled:@"PPAutomaticStatusUpdates"];
+    BOOL chargingReminder = [manager isOptionEnabled:@"PPChargingReminderEnabled"];
+    if (self.observingStatusChanges || (!automaticUpdates && !chargingReminder)) {
         return;
     }
 
     NSNotificationCenter *notificationCenter = NSNotificationCenter.defaultCenter;
-    NSArray<NSNotificationName> *notifications = @[
-        UIDeviceBatteryLevelDidChangeNotification,
-        UIDeviceBatteryStateDidChangeNotification,
-        NSProcessInfoThermalStateDidChangeNotification,
-        NSProcessInfoPowerStateDidChangeNotification,
-        UIScreenCapturedDidChangeNotification
-    ];
+    NSMutableArray<NSNotificationName> *notifications = [NSMutableArray array];
+    if (automaticUpdates || chargingReminder) {
+        UIDevice.currentDevice.batteryMonitoringEnabled = YES;
+        [notifications addObjectsFromArray:@[
+            UIDeviceBatteryLevelDidChangeNotification,
+            UIDeviceBatteryStateDidChangeNotification
+        ]];
+    }
+    if (automaticUpdates || chargingReminder) {
+        [notifications addObject:NSProcessInfoThermalStateDidChangeNotification];
+    }
+    if (automaticUpdates) {
+        [notifications addObjectsFromArray:@[
+            NSProcessInfoPowerStateDidChangeNotification,
+            UIScreenCapturedDidChangeNotification
+        ]];
+    }
     for (NSNotificationName notification in notifications) {
         [notificationCenter addObserver:self
                                selector:@selector(statusDidChange:)
@@ -45,6 +59,7 @@ extern char **environ;
                                  object:nil];
     }
     self.observingStatusChanges = YES;
+    [self evaluateChargingReminder];
 }
 
 - (void)stopObservingStatusChanges {
@@ -52,20 +67,67 @@ extern char **environ;
         return;
     }
     [NSNotificationCenter.defaultCenter removeObserver:self];
+    UIDevice.currentDevice.batteryMonitoringEnabled = NO;
     self.observingStatusChanges = NO;
 }
 
 - (void)statusDidChange:(NSNotification *)notification {
-    (void)notification;
     if (!self.view.window) {
         return;
     }
 
     dispatch_async(dispatch_get_main_queue(), ^{
         if (self.view.window) {
+            if ([notification.name isEqualToString:UIDeviceBatteryLevelDidChangeNotification] ||
+                [notification.name isEqualToString:UIDeviceBatteryStateDidChangeNotification] ||
+                [notification.name isEqualToString:NSProcessInfoThermalStateDidChangeNotification]) {
+                [self evaluateChargingReminder];
+            }
             [self refreshDeviceStatus];
         }
     });
+}
+
+- (void)evaluateChargingReminder {
+    PPManager *manager = PPManager.sharedManager;
+    if (![manager isOptionEnabled:@"PPChargingReminderEnabled"]) {
+        self.didShowChargingReminder = NO;
+        self.didShowChargingHeatWarning = NO;
+        return;
+    }
+
+    NSInteger batteryLevel = manager.batteryLevelPercentage;
+    BOOL isCharging = manager.isBatteryCharging;
+    if (!isCharging) {
+        self.didShowChargingReminder = NO;
+        self.didShowChargingHeatWarning = NO;
+        return;
+    }
+
+    if (manager.isThermalStateSeriousOrCritical) {
+        if (!self.didShowChargingHeatWarning && self.view.window) {
+            self.didShowChargingHeatWarning = YES;
+            [self showMessage:@"iPhone is warm while charging"
+                      message:@"iOS reports a serious or critical thermal state while the battery is charging. Stop demanding apps, move the iPhone out of direct sun to a cool, ventilated place, and disconnect the charger if the device feels unusually hot. Let it cool naturally. iOS manages charging and thermal protection; PerformancePlus cannot control either."];
+        }
+        return;
+    }
+    self.didShowChargingHeatWarning = NO;
+
+    if (batteryLevel < 80) {
+        self.didShowChargingReminder = NO;
+        return;
+    }
+
+    if (self.didShowChargingReminder || !self.view.window) {
+        return;
+    }
+
+    self.didShowChargingReminder = YES;
+    [self showMessage:@"80% charging reminder"
+              message:[NSString stringWithFormat:
+                       @"Battery is at %ld%% and still charging. Unplug manually if you want to stop charging near 80%%. PerformancePlus cannot stop charging. For routine-based optimized charging, use the built-in iOS Battery settings.",
+                       (long)batteryLevel]];
 }
 
 - (NSArray *)specifiers {
@@ -129,7 +191,8 @@ extern char **environ;
     [specifiers addObject:[self valueSpecifierWithTitle:@"Screen Recording Optimization" value:[NSString stringWithFormat:@"%@ Status only; recording behavior is controlled by iOS.", manager.displayCaptureStatus]]];
 
     [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"BATTERY"]];
-    [specifiers addObject:[self valueSpecifierWithTitle:@"Charging Optimization" value:[NSString stringWithFormat:@"%@ Status only; charging controls are not exposed.", manager.batteryStatus]]];
+    [specifiers addObject:[self switchSpecifierWithTitle:@"Charging & Heat Alerts" key:@"PPChargingReminderEnabled" default:@YES]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Charging Optimization" value:@"Reminds at 80% and warns if iOS reports serious heat while charging. Alerts work only while this Settings page is open; unplug manually."]];
     [specifiers addObject:[self valueSpecifierWithTitle:@"Battery Optimization" value:[NSString stringWithFormat:@"%@; %@ (read-only).", manager.batteryStatus, manager.powerStatus]]];
 
     [self addRecoverySpecifiersToArray:specifiers];
@@ -141,7 +204,7 @@ extern char **environ;
 
     [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"ABOUT"]];
     [specifiers addObject:[self valueSpecifierWithTitle:@"PerformancePlus" value:@"Low-overhead device status"]];
-    [specifiers addObject:[self valueSpecifierWithTitle:@"Version" value:@"1.0.8"]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Version" value:@"1.1.0"]];
     [specifiers addObject:[self valueSpecifierWithTitle:@"Device" value:manager.deviceModel]];
     [specifiers addObject:[self valueSpecifierWithTitle:@"iOS" value:manager.systemVersion]];
     [specifiers addObject:[self valueSpecifierWithTitle:@"Jailbreak" value:@"Dopamine rootless" ]];
@@ -280,6 +343,10 @@ extern char **environ;
         }
 
         if ([key isEqualToString:@"PPAutomaticStatusUpdates"]) {
+            [self stopObservingStatusChanges];
+            [self startObservingStatusChanges];
+        } else if ([key isEqualToString:@"PPChargingReminderEnabled"]) {
+            self.didShowChargingReminder = NO;
             [self stopObservingStatusChanges];
             [self startObservingStatusChanges];
         } else if ([key isEqualToString:@"PPSafeMode"]) {
