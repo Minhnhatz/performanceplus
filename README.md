@@ -1,88 +1,71 @@
 # PerformancePlus
 
-PerformancePlus is a rootless jailbreak tweak with a Settings page for device
-information and stored preferences.
-It is distributed through this Sileo/Zebra source:
+PerformancePlus adds a device information page to **Settings** on supported
+rootless-jailbroken iPhones. It shows details such as your device model, iOS
+version, memory, battery, thermal state, power mode, and uptime.
 
-**https://minhnhatz.github.io/performanceplus/**
+> PerformancePlus does not overclock your device or bypass iOS safety
+> protections. Controls that are not supported by safe iOS APIs are clearly
+> marked **“Not supported on this device/iOS version.”**
 
-## Before you install
+## Requirements
 
-- Your device must be jailbroken with a **rootless** jailbreak.
-- The package requires **iOS 15 or later**.
-- The repository provides the `iphoneos-arm64` package.
+- A rootless jailbreak
+- iOS 15 or later
+- An arm64 or arm64e device
+- Sileo or Zebra to install the package
 
-## Add the source in Sileo
+## Install
 
-1. Open **Sileo** and select **Sources**.
+1. Open **Sources** in Sileo or Zebra.
 2. Tap **+** to add a source.
-3. Enter `https://minhnhatz.github.io/performanceplus/` and confirm.
-4. Wait for Sileo to refresh the source list.
-5. Search for **PerformancePlus**, open the package, and tap **Get**.
-6. Review the changes and confirm the installation.
+3. Enter this repository address:
 
-## Add the source in Zebra
+   **https://minhnhatz.github.io/performanceplus/**
 
-1. Open **Zebra** and go to **Sources**.
-2. Tap **+** and choose to add a repository.
-3. Enter `https://minhnhatz.github.io/performanceplus/` and save it.
-4. Let Zebra refresh, then search for **PerformancePlus**.
-5. Open the package, tap **Get**, and confirm the installation.
+4. Refresh the source list and search for **PerformancePlus**.
+5. Install the package and confirm.
+6. Open **Settings → PerformancePlus**.
 
-## Use PerformancePlus
+## What you’ll find
 
-After installation, open **Settings → PerformancePlus**.
+- **Device information:** model, iOS version, and logical CPU core count.
+- **System status:** memory, battery, thermal state, power mode, and uptime.
+- **Recovery options:** safe mode, reset actions, and a respring action that
+  requires your confirmation.
+- **Preference storage:** your saved settings are kept in the
+  `com.blue.performanceplus` preferences domain.
 
-- **Device Status** displays information such as CPU cores, memory, battery,
-  thermal state, power mode, uptime, iOS version, and device model.
-- **Recovery** provides a safe-mode preference, reset actions, and a
-  user-confirmed respring action.
-- **Settings Storage** reports where PerformancePlus preferences are stored.
-- Performance controls that cannot be safely applied through supported
-  user-space APIs are identified as unsupported; their preference switches are
-  not presented as working optimizations.
+Some performance controls are displayed for clarity, but cannot currently
+change system behavior safely. They report that they are unsupported rather
+than claiming to improve performance. RAM, CPU, and GPU beta options default
+to off.
 
-PerformancePlus does not overclock the CPU or GPU, change voltage, bypass
-thermal protections, manipulate charging, or modify kernel memory. iOS remains
-in control of scheduling and thermal behavior. Unsupported controls display
-**Not supported on this device/iOS version.** Experimental RAM, CPU, and GPU
-optimization preferences default to off.
+PerformancePlus does not modify kernel memory, change CPU/GPU voltage or
+clock speeds, disable thermal protection, manipulate charging, or terminate
+critical system processes. iOS continues to manage performance, power, and
+thermals.
 
-## Build from source
+## Update or uninstall
 
-Install Theos with its iOS SDK and Linux toolchain, then set `THEOS` to the
-Theos installation directory. From the repository root, run:
-
-```sh
-make clean
-make package FINALPACKAGE=1
-```
-
-The project targets rootless iOS 15 or later and packages arm64 and arm64e
-architectures. The `Build and deploy APT repository` GitHub Actions workflow
-performs the same clean build before validating and publishing the package.
-
-## Update or remove
-
-To check for an update, open your package manager and refresh the source, then
-visit the **Updates** or **Changes** tab. To uninstall, open the PerformancePlus
-package in Sileo or Zebra and choose **Remove**. You can remove the repository
-later from the package manager's **Sources** list if you no longer need it.
+To update, refresh the PerformancePlus source in Sileo or Zebra and install
+the available update. To uninstall, open the package in your package manager
+and choose **Remove**. You can remove the repository from **Sources** if you
+no longer want to receive updates.
 
 ## Troubleshooting
 
-- **The source will not add:** Check that the URL is exactly
+- **The source cannot be added:** Check that the address is exactly
   `https://minhnhatz.github.io/performanceplus/`, including the trailing slash,
-  then retry on a working internet connection.
-- **The package does not appear:** Pull down to refresh the source list, then
-  search for `PerformancePlus` again.
-- **The package is marked incompatible:** Confirm that your device is on iOS
-  15 or later and uses a rootless jailbreak.
-- **The Settings page is missing:** Confirm the installation completed in your
-  package manager. If it still does not appear, respring your device and check
-  again.
+  then try refreshing again.
+- **The package does not appear:** Refresh the source and search for
+  `PerformancePlus`.
+- **The package is incompatible:** Confirm you have iOS 15 or later and a
+  rootless jailbreak.
+- **PerformancePlus is missing from Settings:** Check that installation
+  completed successfully. If it is still missing, respring your device.
 
-## Project
+## Links
 
-Browse the source code or report a problem on
-[GitHub](https://github.com/Minhnhatz/performanceplus).
+- [PerformancePlus package source](https://minhnhatz.github.io/performanceplus/)
+- [Source code and issue reporting](https://github.com/Minhnhatz/performanceplus)
