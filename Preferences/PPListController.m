@@ -3,7 +3,6 @@
 #import <Preferences/PSSpecifier.h>
 #import <Preferences/PSTableCell.h>
 #import "../PPManager.h"
-#import <math.h>
 #import <errno.h>
 #import <spawn.h>
 #import <sys/wait.h>
@@ -144,81 +143,22 @@ extern char **environ;
     }
 
     UIImage *icon = [PPIconManager imageForTitle:title];
-    UIView *iconBadgeView = [cell.contentView viewWithTag:7106];
-    UIImageView *iconBadge = [iconBadgeView isKindOfClass:UIImageView.class] ? (UIImageView *)iconBadgeView : nil;
-    if (icon) {
-        if (!iconBadge) {
-            iconBadge = [[UIImageView alloc] initWithFrame:CGRectZero];
-            iconBadge.tag = 7106;
-            iconBadge.contentMode = UIViewContentModeCenter;
-            iconBadge.layer.cornerRadius = 12.0;
-            iconBadge.layer.masksToBounds = YES;
-            [cell.contentView addSubview:iconBadge];
-        }
-        iconBadge.hidden = NO;
-        iconBadge.image = icon;
+    UIImageView *iconView = cell.imageView;
+    if (icon && iconView) {
         UIColor *accent = [PPIconManager accentColorForIconName:[PPIconManager iconNameForTitle:title]];
-        iconBadge.backgroundColor = [accent colorWithAlphaComponent:0.15];
-        iconBadge.tintColor = accent;
-        iconBadge.frame = CGRectMake(14.0,
-                                     floor((CGRectGetHeight(cell.contentView.bounds) - 42.0) / 2.0),
-                                     42.0,
-                                     42.0);
-        cell.separatorInset = UIEdgeInsetsMake(0.0, CGRectGetMaxX(iconBadge.frame) + 12.0, 0.0, 14.0);
+        iconView.image = icon;
+        iconView.tintColor = accent;
+        iconView.backgroundColor = [accent colorWithAlphaComponent:0.15];
+        iconView.contentMode = UIViewContentModeScaleAspectFit;
+        iconView.layer.cornerRadius = 10.0;
+        iconView.layer.masksToBounds = YES;
+        cell.separatorInset = UIEdgeInsetsMake(0.0, 58.0, 0.0, 14.0);
     } else {
-        iconBadge.hidden = YES;
+        iconView.image = nil;
         cell.separatorInset = UIEdgeInsetsMake(0.0, 20.0, 0.0, 14.0);
     }
     if (lastRow) {
         cell.separatorInset = UIEdgeInsetsMake(0.0, CGRectGetWidth(self.table.bounds), 0.0, 0.0);
-    }
-
-    UIView *subtitleView = [cell.contentView viewWithTag:7105];
-    UILabel *subtitleLabel = [subtitleView isKindOfClass:UILabel.class] ? (UILabel *)subtitleView : nil;
-    NSString *subtitle = [PPIconManager subtitleForTitle:title];
-    NSString *valueText = cell.detailTextLabel.text;
-    BOOL hasValue = valueText.length > 0;
-    BOOL selectionRow = cell.accessoryType == UITableViewCellAccessoryDisclosureIndicator;
-    CGFloat leading = icon && iconBadge ? CGRectGetMaxX(iconBadge.frame) + 12.0 : 16.0;
-    CGFloat trailing = CGRectGetWidth(cell.contentView.bounds) - 16.0;
-    if (cell.accessoryView) {
-        trailing = MIN(trailing, CGRectGetMinX(cell.accessoryView.frame) - 12.0);
-    } else if (cell.accessoryType != UITableViewCellAccessoryNone) {
-        trailing -= 26.0;
-    }
-
-    if (!selectionRow && (hasValue || subtitle.length > 0)) {
-        if (!subtitleLabel) {
-            subtitleLabel = [[UILabel alloc] initWithFrame:CGRectZero];
-            subtitleLabel.tag = 7105;
-            subtitleLabel.font = [UIFont systemFontOfSize:12.0 weight:UIFontWeightRegular];
-            subtitleLabel.textColor = UIColor.secondaryLabelColor;
-            subtitleLabel.numberOfLines = 1;
-            subtitleLabel.lineBreakMode = NSLineBreakByTruncatingTail;
-            [cell.contentView addSubview:subtitleLabel];
-        }
-        [cell layoutIfNeeded];
-        subtitleLabel.text = hasValue ? valueText : subtitle;
-        subtitleLabel.hidden = NO;
-        subtitleLabel.textColor = UIColor.secondaryLabelColor;
-        CGFloat labelWidth = MAX(0.0, trailing - leading);
-        cell.textLabel.frame = CGRectMake(leading, 8.0, labelWidth, 22.0);
-        subtitleLabel.frame = CGRectMake(leading, 32.0, labelWidth, 17.0);
-        cell.detailTextLabel.hidden = hasValue;
-    } else {
-        subtitleLabel.hidden = YES;
-        cell.detailTextLabel.hidden = NO;
-        CGFloat titleWidth = MAX(0.0, trailing - leading);
-        if (hasValue && cell.detailTextLabel && selectionRow) {
-            CGFloat valueWidth = MIN(CGRectGetWidth(cell.contentView.bounds) * 0.35, 90.0);
-            cell.detailTextLabel.textAlignment = NSTextAlignmentRight;
-            cell.detailTextLabel.frame = CGRectMake(trailing - valueWidth, 0.0, valueWidth, CGRectGetHeight(cell.contentView.bounds));
-            titleWidth = MAX(0.0, CGRectGetMinX(cell.detailTextLabel.frame) - leading - 8.0);
-        }
-        cell.textLabel.frame = CGRectMake(leading,
-                                          floor((CGRectGetHeight(cell.contentView.bounds) - 22.0) / 2.0),
-                                          titleWidth,
-                                          22.0);
     }
 }
 
@@ -407,7 +347,7 @@ extern char **environ;
     [specifiers addObject:[self valueSpecifierWithTitle:@"Preference Storage" value:@"Saved on this device"]];
     [self addDeviceStatusSpecifiersToArray:specifiers manager:manager];
     [specifiers addObject:[self valueSpecifierWithTitle:@"PerformancePlus" value:@"Low-overhead device status"]];
-    [specifiers addObject:[self valueSpecifierWithTitle:@"Version" value:@"1.1.5"]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Version" value:@"1.1.6"]];
     [specifiers addObject:[self valueSpecifierWithTitle:@"Device" value:manager.deviceModel]];
     [specifiers addObject:[self valueSpecifierWithTitle:@"iOS" value:manager.systemVersion]];
     [specifiers addObject:[self valueSpecifierWithTitle:@"Jailbreak" value:@"Dopamine rootless" ]];
