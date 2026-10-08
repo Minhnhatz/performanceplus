@@ -114,7 +114,8 @@ extern char **environ;
     }
     self.didShowChargingHeatWarning = NO;
 
-    if (batteryLevel < 80) {
+    NSInteger threshold = manager.chargingReminderThreshold;
+    if (batteryLevel < threshold) {
         self.didShowChargingReminder = NO;
         return;
     }
@@ -124,10 +125,11 @@ extern char **environ;
     }
 
     self.didShowChargingReminder = YES;
-    [self showMessage:@"80% charging reminder"
+    [self showMessage:[NSString stringWithFormat:@"%ld%% charging reminder",
+                       (long)threshold]
               message:[NSString stringWithFormat:
-                       @"Battery is at %ld%% and still charging. Unplug manually if you want to stop charging near 80%%. PerformancePlus cannot stop charging. For routine-based optimized charging, use the built-in iOS Battery settings.",
-                       (long)batteryLevel]];
+                       @"Battery is at %ld%% and still charging. Unplug manually if you want to stop charging near %ld%%. PerformancePlus cannot stop charging. For routine-based optimized charging, use the built-in iOS Battery settings.",
+                       (long)batteryLevel, (long)threshold]];
 }
 
 - (NSArray *)specifiers {
@@ -192,8 +194,15 @@ extern char **environ;
 
     [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"BATTERY"]];
     [specifiers addObject:[self switchSpecifierWithTitle:@"Charging & Heat Alerts" key:@"PPChargingReminderEnabled" default:@YES]];
-    [specifiers addObject:[self valueSpecifierWithTitle:@"Charging Optimization" value:@"Reminds at 80% and warns if iOS reports serious heat while charging. Alerts work only while this Settings page is open; unplug manually."]];
+    [specifiers addObject:[self listSpecifierWithTitle:@"Charging Reminder Threshold"
+                                                   key:@"PPChargingReminderThreshold"
+                                           defaultValue:@"80"
+                                                 values:@[@"80", @"85", @"90", @"95", @"100"]
+                                                 titles:@[@"80%", @"85%", @"90%", @"95%", @"100%"]]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Charging Optimization" value:@"Reminds at your chosen threshold and warns if iOS reports serious heat while charging. Alerts work only while this Settings page is open; unplug manually."]];
     [specifiers addObject:[self valueSpecifierWithTitle:@"Battery Optimization" value:[NSString stringWithFormat:@"%@; %@ (read-only).", manager.batteryStatus, manager.powerStatus]]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Optimized Charging" value:@"For routine-based charging, enable Apple's built-in Optimized Battery Charging in Settings → Battery."]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Charging Heat Advice" value:@"Avoid direct sunlight and demanding games while charging. If unusually hot, disconnect power and let iPhone cool naturally."]];
 
     [self addRecoverySpecifiersToArray:specifiers];
 
@@ -204,7 +213,7 @@ extern char **environ;
 
     [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"ABOUT"]];
     [specifiers addObject:[self valueSpecifierWithTitle:@"PerformancePlus" value:@"Low-overhead device status"]];
-    [specifiers addObject:[self valueSpecifierWithTitle:@"Version" value:@"1.1.0"]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Version" value:@"1.1.1"]];
     [specifiers addObject:[self valueSpecifierWithTitle:@"Device" value:manager.deviceModel]];
     [specifiers addObject:[self valueSpecifierWithTitle:@"iOS" value:manager.systemVersion]];
     [specifiers addObject:[self valueSpecifierWithTitle:@"Jailbreak" value:@"Dopamine rootless" ]];
@@ -333,6 +342,10 @@ extern char **environ;
     PPManager *manager = PPManager.sharedManager;
     if ([value isKindOfClass:NSString.class]) {
         [manager setString:value forKey:key];
+        if ([key isEqualToString:@"PPChargingReminderThreshold"]) {
+            self.didShowChargingReminder = NO;
+            [self evaluateChargingReminder];
+        }
         return;
     }
     if ([value respondsToSelector:@selector(boolValue)]) {

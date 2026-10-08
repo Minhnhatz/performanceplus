@@ -30,6 +30,7 @@
 - (NSString *)cpuUsageStatus;
 - (NSString *)memoryStatus;
 - (NSInteger)batteryLevelPercentage;
+- (NSInteger)chargingReminderThreshold;
 - (BOOL)isBatteryCharging;
 - (NSString *)batteryStatus;
 - (NSString *)thermalStatus;

@@ -37,6 +37,7 @@ static NSArray<NSString *> *PPDefaultFeatureKeys(void) {
             @"PPRecordingOptimization",
             @"PPChargingOptimization",
             @"PPChargingReminderEnabled",
+            @"PPChargingReminderThreshold",
             @"PPBatteryOptimization",
             @"PPGamingMode",
             @"PPAutoProfile",
@@ -93,6 +94,7 @@ static NSDictionary<NSString *, id> *PPDefaultPreferences(void) {
             @"PPRecordingOptimization": @YES,
             @"PPChargingOptimization": @YES,
             @"PPChargingReminderEnabled": @YES,
+            @"PPChargingReminderThreshold": @"80",
             @"PPBatteryOptimization": @YES,
             @"PPGamingMode": @NO,
             @"PPAutoProfile": @"Auto",
@@ -455,6 +457,16 @@ static NSSet<NSString *> *PPOptionKeys(void) {
     UIDevice *device = UIDevice.currentDevice;
     device.batteryMonitoringEnabled = YES;
     return device.batteryState == UIDeviceBatteryStateCharging;
+}
+
+- (NSInteger)chargingReminderThreshold {
+    NSString *value = [self stringForKey:@"PPChargingReminderThreshold"
+                            defaultValue:@"80"];
+    NSInteger threshold = value.integerValue;
+    if (threshold < 80 || threshold > 100 || threshold % 5 != 0) {
+        return 80;
+    }
+    return threshold;
 }
 
 - (NSString *)thermalStatus {
