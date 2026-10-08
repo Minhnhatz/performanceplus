@@ -1,14 +1,14 @@
 Package: com.blue.performanceplus
-Version: 1.1.1
+Version: 1.1.2
 Architecture: iphoneos-arm64
 Maintainer: Blue
-Installed-Size: 264
+Installed-Size: 268
 Depends: firmware (>= 15.0), preferenceloader
-Filename: pool/main/c/com.blue.performanceplus/com.blue.performanceplus_1.1.1_iphoneos-arm64.deb
-Size: 26134
-MD5sum: d863f9004772148d56d8147a05d7fb33
-SHA1: 5b54195e574d4ccfbb2709856dd2b25100886fc3
-SHA256: 70241d90954d54909e516897199b2002f4f27df86595bc0bcdf36b7dcd7fea8d
+Filename: pool/main/c/com.blue.performanceplus/com.blue.performanceplus_1.1.2_iphoneos-arm64.deb
+Size: 27460
+MD5sum: baff335b97cc01a9b46d7b7c4448394e
+SHA1: db0377bccde98c2cf84d4811d29a5df1657b2c40
+SHA256: 1a7dc58dee022240b9c6d981a78e144ccb9c74f8a0be2358ef01b91cfafdbe48
 Section: Tweaks
 Description: Low-overhead device status and recovery preferences
 Author: Blue
