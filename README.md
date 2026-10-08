@@ -65,6 +65,64 @@ no longer want to receive updates.
 - **PerformancePlus is missing from Settings:** Check that installation
   completed successfully. If it is still missing, respring your device.
 
+## Function reference
+
+This section lists the main Objective-C methods for readers who want to
+understand the implementation. It describes what the code currently does;
+unsupported performance controls do not apply system changes.
+
+### `PPManager`
+
+| Function | What it does |
+| --- | --- |
+| `+sharedManager` | Returns the shared preferences and device-information manager. |
+| `-init` | Creates a manager instance and registers preference defaults. |
+| `-registerDefaultPreferences` | Registers default values in the `com.blue.performanceplus` settings domain. |
+| `-isEnabled` / `-setEnabled:` | Reads or saves the main enable preference. |
+| `-isOptionEnabled:` / `-setOption:enabled:` | Reads or saves an allow-listed Boolean option. |
+| `-boolForKey:defaultValue:` / `-setBool:forKey:` | Reads or saves a Boolean preference. |
+| `-stringForKey:defaultValue:` / `-setString:forKey:` | Reads or saves a string preference. |
+| `-refreshRateOptions` | Builds refresh-rate labels from the device's reported maximum refresh rate. |
+| `-fpsOptions` | Builds FPS labels from the device's reported maximum refresh rate. |
+| `-unsupportedMessage` | Returns the standard unsupported-feature message. |
+| `-experimentalMessage` | Returns the experimental-feature notice. |
+| `-limitedByIOSMessage` | Returns the notice that behavior is limited by iOS. |
+| `-deviceModel` | Returns the device model and, when available, its hardware identifier. |
+| `-systemVersion` | Returns the installed iOS version. |
+| `-cpuStatus` | Reports the logical processor count. |
+| `-memoryStatus` | Reads and formats memory statistics using user-space APIs. |
+| `-batteryStatus` | Reports battery level and charging state when available. |
+| `-thermalStatus` | Reports the iOS thermal state when available. |
+| `-powerStatus` | Reports whether Low Power Mode is enabled. |
+| `-uptimeStatus` | Formats the system uptime. |
+
+### `PPListController`
+
+| Function | What it does |
+| --- | --- |
+| `-specifiers` | Builds the rows and sections shown in Settings, including device information and unsupported-feature notices. |
+| `-switchSpecifierWithTitle:key:default:` | Creates a Boolean preference row. |
+| `-listSpecifierWithTitle:key:defaultValue:values:titles:` | Creates a list preference row. |
+| `-valueSpecifierWithTitle:value:` | Creates a read-only label and value row. |
+| `-unsupportedSpecifierWithTitle:` | Creates a read-only row displaying the standard unsupported message. |
+| `-buttonSpecifierWithTitle:action:` | Creates a button row linked to an action. |
+| `-readPreferenceValue:` | Reads a preference value for a Settings row. |
+| `-valueForSpecifier:` | Supplies the displayed value for a read-only row. |
+| `-setPreferenceValue:specifier:` | Saves a Boolean or string preference selected in Settings. |
+| `-refreshDeviceStatus` | Reloads the Settings rows. |
+| `-disableExperimentalFeatures` | Turns off the RAM, CPU, and GPU beta preferences and shows confirmation. |
+| `-resetAllSettings` | Removes saved preferences and restores registered defaults. |
+| `-restoreSafeDefaults` | Disables experimental options and resets saved preferences. |
+| `-confirmRespring` | Asks for confirmation before offering a respring action. |
+| `-respring` | Starts the rootless `sbreload` utility after confirmation and reports failures. |
+| `-showMessage:message:` | Displays an alert with a title and message. |
+
+### `Tweak.x`
+
+| Function | What it does |
+| --- | --- |
+| `PPApplySafeProfileState` | Reads the enable, safe-mode, gaming-mode, and thermal-profile preferences at startup. It does not change CPU/GPU speeds, thermals, or other system performance settings. |
+
 ## Links
 
 - [PerformancePlus package source](https://minhnhatz.github.io/performanceplus/)
