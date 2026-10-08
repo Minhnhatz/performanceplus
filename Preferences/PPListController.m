@@ -16,6 +16,39 @@ extern char **environ;
 
 @implementation PPListController
 
+- (void)viewDidLoad {
+    [super viewDidLoad];
+
+    self.title = @"PerformancePlus";
+    UIImage *icon = [UIImage imageWithContentsOfFile:
+                     @"/var/jb/Library/PreferenceLoader/Preferences/PerformancePlus.png"];
+    if (!icon) {
+        icon = [UIImage systemImageNamed:@"waveform.path"];
+    }
+
+    UIImageView *iconView = [[UIImageView alloc] initWithImage:[icon imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate]];
+    iconView.translatesAutoresizingMaskIntoConstraints = NO;
+    iconView.contentMode = UIViewContentModeScaleAspectFit;
+    iconView.tintColor = UIColor.labelColor;
+    [NSLayoutConstraint activateConstraints:@[
+        [iconView.widthAnchor constraintEqualToConstant:16],
+        [iconView.heightAnchor constraintEqualToConstant:16]
+    ]];
+
+    UILabel *titleLabel = [[UILabel alloc] init];
+    titleLabel.text = self.title;
+    titleLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleHeadline];
+    titleLabel.textColor = UIColor.labelColor;
+
+    UIStackView *titleView = [[UIStackView alloc] initWithArrangedSubviews:@[iconView, titleLabel]];
+    titleView.axis = UILayoutConstraintAxisHorizontal;
+    titleView.alignment = UIStackViewAlignmentCenter;
+    titleView.spacing = 6;
+    titleView.isAccessibilityElement = YES;
+    titleView.accessibilityLabel = self.title;
+    self.navigationItem.titleView = titleView;
+}
+
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
     [self startObservingStatusChanges];
@@ -213,7 +246,7 @@ extern char **environ;
 
     [specifiers addObject:[PSSpecifier groupSpecifierWithName:@"ABOUT"]];
     [specifiers addObject:[self valueSpecifierWithTitle:@"PerformancePlus" value:@"Low-overhead device status"]];
-    [specifiers addObject:[self valueSpecifierWithTitle:@"Version" value:@"1.1.3"]];
+    [specifiers addObject:[self valueSpecifierWithTitle:@"Version" value:@"1.1.4"]];
     [specifiers addObject:[self valueSpecifierWithTitle:@"Device" value:manager.deviceModel]];
     [specifiers addObject:[self valueSpecifierWithTitle:@"iOS" value:manager.systemVersion]];
     [specifiers addObject:[self valueSpecifierWithTitle:@"Jailbreak" value:@"Dopamine rootless" ]];

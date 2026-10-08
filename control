@@ -1,6 +1,6 @@
 Package: com.blue.performanceplus
 Name: PerformancePlus
-Version: 1.1.3
+Version: 1.1.4
 Architecture: iphoneos-arm64
 Description: Low-overhead device status and recovery preferences
 Maintainer: Blue
