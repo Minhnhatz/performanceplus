@@ -16,12 +16,18 @@
 
   <header class="shell topbar">
     <a class="brand" href="./" aria-label="PerformancePlus home">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4.5h8a2.5 2.5 0 0 1 2.5 2.5v10A2.5 2.5 0 0 1 16 19.5H8A2.5 2.5 0 0 1 5.5 17V7A2.5 2.5 0 0 1 8 4.5Zm2.5 4.2h3m-3 3.1h5.2M9.8 15.3h4.4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </span>
       <span>PerformancePlus<span class="brand-caption">A rootless iOS utility</span></span>
     </a>
     <nav class="nav-links" aria-label="Main navigation">
       <a href="#package">The package</a>
       <a href="#install">How to install</a>
-      <a class="nav-github" href="https://github.com/{{GITHUB_REPOSITORY}}" target="_blank" rel="noreferrer">Source</a>
+      <a class="nav-github" href="https://github.com/{{GITHUB_REPOSITORY}}" target="_blank" rel="noreferrer">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18.3c-3.3 1-3.3-1.7-4.5-2.1m7.5 2.4V15a3.2 3.2 0 0 0-.9-2.5c2.8-.3 5.7-1.4 5.7-6.1A4.7 4.7 0 0 0 17 3.9a4.4 4.4 0 0 0-.1-3.1s-1.1-.3-3.6 1.3a12.5 12.5 0 0 0-6.6 0C6.3.5 5.2.8 5.2.8A4.4 4.4 0 0 0 5.1 3.9 4.7 4.7 0 0 0 4.3 8c0 4.7 2.9 5.8 5.7 6.1A3.2 3.2 0 0 0 9 15v3.3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Source
+      </a>
     </nav>
   </header>
 
@@ -75,6 +81,9 @@
 
       <article class="package-card reveal reveal-delay" data-reveal>
         <div class="package-main">
+          <span class="package-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3.5v6m-3.4 2.5L12 12l3.4 0M6.5 14.5l5.5 5.5 5.5-5.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
           <div>
             <h3 class="package-title">{{PACKAGE_NAME}}</h3>
             <p class="package-id">{{PACKAGE_DESCRIPTION}}</p>
@@ -90,15 +99,30 @@
 
       <div class="feature-grid">
         <article class="feature-card reveal" data-reveal>
-          <h3>Useful device information</h3>
+          <div class="feature-head">
+            <span class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.7h8a2.3 2.3 0 0 1 2.3 2.3v8A2.3 2.3 0 0 1 16 18.3H8A2.3 2.3 0 0 1 5.7 16V8A2.3 2.3 0 0 1 8 5.7Zm2.2 4.1h3.6M10.3 12.3h5.4M9.5 15.3h3.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <h3>Useful device information</h3>
+          </div>
           <p>See device model, iOS version, CPU cores, memory, battery, and system status in one place.</p>
         </article>
         <article class="feature-card reveal reveal-delay" data-reveal>
-          <h3>Preferences, not promises</h3>
+          <div class="feature-head">
+            <span class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9.2V6.8A1.8 1.8 0 0 1 7.8 5h8.4A1.8 1.8 0 0 1 18 6.8v2.4M8 18.3h8M9.5 9.2h5v9.1h-5z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <h3>Preferences, not promises</h3>
+          </div>
           <p>The optional switches store your choices. They do not change system scheduling or claim to optimize performance.</p>
         </article>
         <article class="feature-card reveal reveal-delay-2" data-reveal>
-          <h3>iOS stays in charge</h3>
+          <div class="feature-head">
+            <span class="feature-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13.3 2.8 6.3 12h4.8l-1.2 9.2 7-9.2h-4.5l1.9-9.2Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <h3>iOS stays in charge</h3>
+          </div>
           <p>No overclocking, voltage changes, thermal bypasses, charging manipulation, or kernel-memory changes.</p>
         </article>
       </div>
