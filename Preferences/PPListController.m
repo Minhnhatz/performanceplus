@@ -21,8 +21,8 @@ extern char **environ;
     [super viewDidLoad];
 
     self.title = @"PerformancePlus";
-    UIImage *icon = [PPIconManager imageForTitle:self.title];
 
+    UIImage *icon = [PPIconManager imageForTitle:self.title];
     UIImageView *iconView = [[UIImageView alloc] initWithImage:icon];
     iconView.translatesAutoresizingMaskIntoConstraints = NO;
     iconView.contentMode = UIViewContentModeScaleAspectFit;
@@ -155,6 +155,7 @@ extern char **environ;
         cell.separatorInset = UIEdgeInsetsMake(0.0, 58.0, 0.0, 14.0);
     } else {
         iconView.image = nil;
+        iconView.backgroundColor = UIColor.clearColor;
         cell.separatorInset = UIEdgeInsetsMake(0.0, 20.0, 0.0, 14.0);
     }
     if (lastRow) {
