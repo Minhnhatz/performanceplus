@@ -940,3 +940,389 @@ h1 span {
     animation-iteration-count: 1 !important;
   }
 }
+
+/* Editorial layout and liquid-glass surfaces */
+.topbar {
+  position: sticky;
+  top: 12px;
+  z-index: 5;
+  width: min(var(--shell), calc(100% - 48px));
+  min-height: 68px;
+  margin-top: 12px;
+  padding: 0 18px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  background: rgba(16, 12, 20, 0.68);
+  -webkit-backdrop-filter: blur(28px) saturate(170%);
+  backdrop-filter: blur(28px) saturate(170%);
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.hero {
+  position: relative;
+  min-height: 660px;
+  grid-template-columns: minmax(0, 1.1fr) minmax(360px, 0.9fr);
+  gap: clamp(32px, 6vw, 86px);
+  padding-top: 96px;
+  padding-bottom: 104px;
+}
+
+.hero::before {
+  position: absolute;
+  z-index: -1;
+  top: 9%;
+  left: -17%;
+  width: 62%;
+  height: 78%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(255, 73, 201, 0.1), transparent 68%);
+  content: "";
+  pointer-events: none;
+}
+
+.hero > div {
+  position: relative;
+  z-index: 1;
+}
+
+.hero .eyebrow {
+  margin-bottom: 24px;
+}
+
+h1 {
+  max-width: 700px;
+  margin-bottom: 24px;
+  font-size: clamp(58px, 8vw, 96px);
+  font-weight: 740;
+  letter-spacing: -0.09em;
+  line-height: 0.94;
+}
+
+h1 span {
+  color: transparent;
+  background: linear-gradient(100deg, #fff0fa 0%, #ff9ee8 34%, #ff5bd1 72%, #d5a7ff 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+}
+
+.hero-copy {
+  max-width: 490px;
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.hero-note {
+  color: #d1c3d0;
+}
+
+.button {
+  min-height: 48px;
+  border-radius: 14px;
+}
+
+.button-primary {
+  box-shadow: 0 8px 30px rgba(255, 89, 208, 0.2), inset 0 1px 0 rgba(255,255,255,0.65);
+}
+
+.device-card {
+  width: 100%;
+  max-width: 460px;
+  justify-self: end;
+  padding: 26px;
+  border-radius: 32px;
+  transform: perspective(1200px) rotateY(-4deg) rotateX(2deg);
+  box-shadow:
+    0 38px 100px rgba(0, 0, 0, 0.48),
+    0 0 80px rgba(255, 76, 205, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.device-card:hover {
+  transform: perspective(1200px) rotateY(0) rotateX(0) translateY(-3px);
+}
+
+.device-card::before {
+  z-index: 0;
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(255, 143, 231, 0.17), transparent 38%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.15), transparent 34%);
+  transform: none;
+  animation: none;
+}
+
+.device-card-head,
+.device-list,
+.device-card-foot {
+  z-index: 1;
+}
+
+.device-card-head {
+  padding-bottom: 22px;
+}
+
+.device-card-head h2 {
+  font-size: 20px;
+}
+
+.device-list {
+  gap: 5px;
+  margin-top: 19px;
+}
+
+.device-list li {
+  min-height: 68px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  transition: background 180ms ease, border-color 180ms ease;
+}
+
+.device-list li:hover {
+  border-color: rgba(255, 255, 255, 0.09);
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.device-list strong {
+  font-size: 12px;
+}
+
+.device-list small {
+  font-size: 11px;
+}
+
+.device-card-foot {
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.045);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+}
+
+.section {
+  padding-top: 88px;
+  padding-bottom: 88px;
+}
+
+.section-heading {
+  align-items: end;
+  margin-bottom: 30px;
+}
+
+.section-heading h2 {
+  font-size: clamp(34px, 4.5vw, 52px);
+  letter-spacing: -0.075em;
+}
+
+.section-heading > p {
+  max-width: 390px;
+  font-size: 13px;
+}
+
+.package-card {
+  min-height: 132px;
+  padding: 26px;
+  border-radius: 24px;
+}
+
+.package-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+}
+
+.package-icon svg {
+  width: 19px;
+  height: 19px;
+}
+
+.package-title {
+  font-size: 17px;
+}
+
+.package-id {
+  font-size: 11px;
+}
+
+.pill {
+  padding: 6px 10px;
+}
+
+.feature-grid {
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.feature-card {
+  min-height: 190px;
+  padding: 22px;
+  border-radius: 22px;
+}
+
+.feature-head {
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.feature-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 13px;
+}
+
+.feature-icon svg {
+  width: 17px;
+  height: 17px;
+}
+
+.feature-card h3 {
+  font-size: 13px;
+}
+
+.feature-card p {
+  font-size: 12px;
+  line-height: 1.75;
+}
+
+.install-layout {
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: clamp(30px, 6vw, 84px);
+  padding: 34px;
+  border: 1px solid var(--glass-edge);
+  border-radius: 28px;
+  background:
+    radial-gradient(ellipse at 4% 0%, rgba(255, 105, 214, 0.1), transparent 52%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.075), transparent 42%),
+    rgba(17, 13, 21, 0.58);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  backdrop-filter: blur(24px) saturate(150%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.16), 0 24px 70px rgba(0,0,0,0.22);
+}
+
+.install-intro h2 {
+  font-size: clamp(38px, 5vw, 56px);
+  letter-spacing: -0.08em;
+}
+
+.install-intro > p:last-child {
+  font-size: 13px;
+}
+
+.compatibility span {
+  background: rgba(255, 255, 255, 0.055);
+  border-color: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+.install-steps li {
+  min-height: 62px;
+  font-size: 13px;
+}
+
+.source-copy {
+  margin-top: 18px;
+}
+
+.footer {
+  margin-top: 36px;
+}
+
+@media (max-width: 800px) {
+  .topbar {
+    width: min(var(--shell), calc(100% - 34px));
+  }
+
+  .hero {
+    min-height: 0;
+    gap: 50px;
+    padding-top: 82px;
+    padding-bottom: 76px;
+  }
+
+  .device-card {
+    justify-self: center;
+    transform: none;
+  }
+
+  .device-card:hover {
+    transform: translateY(-3px);
+  }
+
+  .section {
+    padding-top: 68px;
+    padding-bottom: 68px;
+  }
+
+  .install-layout {
+    padding: 26px;
+  }
+}
+
+@media (max-width: 600px) {
+  .topbar {
+    top: 8px;
+    min-height: 62px;
+    margin-top: 8px;
+    padding: 0 13px;
+    border-radius: 17px;
+  }
+
+  .brand {
+    gap: 8px;
+    font-size: 12px;
+  }
+
+  .brand-caption {
+    font-size: 9px;
+  }
+
+  .nav-links {
+    gap: 14px;
+  }
+
+  .nav-links a:nth-child(2) {
+    display: none;
+  }
+
+  .hero {
+    gap: 38px;
+    padding-top: 68px;
+    padding-bottom: 58px;
+  }
+
+  .hero .eyebrow {
+    margin-bottom: 20px;
+  }
+
+  h1 {
+    font-size: clamp(52px, 14vw, 74px);
+  }
+
+  .device-card {
+    padding: 20px;
+    border-radius: 25px;
+  }
+
+  .section {
+    padding-top: 54px;
+    padding-bottom: 54px;
+  }
+
+  .package-card {
+    padding: 19px;
+    border-radius: 20px;
+  }
+
+  .install-layout {
+    gap: 27px;
+    padding: 21px;
+    border-radius: 23px;
+  }
+
+  .footer {
+    margin-top: 18px;
+  }
+}
