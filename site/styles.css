@@ -37,6 +37,7 @@ body {
     radial-gradient(ellipse at 14% 36%, rgba(114, 133, 255, 0.08), transparent 30rem),
     linear-gradient(145deg, #06060b 0%, #100a13 54%, #080910 100%);
   overflow-x: hidden;
+  padding-top: env(safe-area-inset-top, 0px);
 }
 
 .bg-glow {
@@ -248,6 +249,72 @@ h1 span {
   flex-wrap: wrap;
   align-items: center;
   gap: 11px;
+}
+
+.hero-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 18px 0 0;
+}
+
+.hero-badges span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 10px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.status-strip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(86px, 1fr));
+  gap: 10px;
+  max-width: 420px;
+  margin-top: 18px;
+}
+
+.status-pill {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-height: 70px;
+  padding: 11px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 16px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.status-pill::before {
+  position: absolute;
+  inset: auto 12px 8px 12px;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(255, 105, 214, 0.4), rgba(114, 133, 255, 0.3));
+  border-radius: 999px;
+  content: "";
+}
+
+.status-label {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.status-pill strong {
+  margin-top: 2px;
+  font-size: 15px;
+  letter-spacing: -0.04em;
 }
 
 .button {
@@ -853,12 +920,31 @@ h1 span {
   }
 
   .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
     min-height: 70px;
+    background: rgba(8, 7, 11, 0.82);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+
+  .brand-caption {
+    display: none;
   }
 
   .nav-links {
-    gap: 16px;
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 12px;
+    overflow-x: auto;
+    padding-bottom: 2px;
     font-size: 11px;
+    scrollbar-width: none;
+  }
+
+  .nav-links::-webkit-scrollbar {
+    display: none;
   }
 
   .nav-links a:first-child {
@@ -882,8 +968,28 @@ h1 span {
     font-size: 14px;
   }
 
+  .hero-actions {
+    display: grid;
+    gap: 10px;
+  }
+
+  .hero-badges {
+    margin-top: 12px;
+  }
+
+  .status-strip {
+    max-width: none;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .status-pill {
+    min-height: 60px;
+    padding: 10px 10px 12px;
+  }
+
   .hero-actions .button {
     min-height: 43px;
+    width: 100%;
     padding: 0 12px;
     font-size: 11px;
   }
@@ -922,6 +1028,26 @@ h1 span {
   .feature-card {
     min-height: 0;
     padding: 17px;
+  }
+
+  .install-layout {
+    gap: 18px;
+  }
+
+  .source-copy {
+    flex-wrap: wrap;
+    padding: 10px 10px 11px;
+  }
+
+  .source-copy code {
+    display: block;
+    width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .source-copy button {
+    width: 100%;
   }
 
   .footer {

@@ -1,6 +1,5 @@
 const copyButton = document.querySelector("[data-copy-source]");
 const copyStatus = document.querySelector("#copy-status");
-
 const revealElements = document.querySelectorAll("[data-reveal]");
 
 if ("IntersectionObserver" in window && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
@@ -18,10 +17,28 @@ if ("IntersectionObserver" in window && !window.matchMedia("(prefers-reduced-mot
   revealElements.forEach((element) => element.classList.add("visible"));
 }
 
+async function copyTextToClipboard(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+
+  const helper = document.createElement("textarea");
+  helper.value = text;
+  helper.setAttribute("readonly", "");
+  helper.style.position = "fixed";
+  helper.style.top = "-9999px";
+  document.body.appendChild(helper);
+  helper.select();
+  document.execCommand("copy");
+  document.body.removeChild(helper);
+}
+
 copyButton?.addEventListener("click", async () => {
   const source = copyButton.dataset.copySource;
+
   try {
-    await navigator.clipboard.writeText(source);
+    await copyTextToClipboard(source);
     if (copyStatus) {
       copyStatus.textContent = "Copied";
     }
